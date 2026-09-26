@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup & Restore{% endblock %}
+
+{% block extra_css %}
+<style>
+.backup-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.backup-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.backup-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+
+.backup-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.backup-card h2 { font-size: 14.5px; margin: 0 0 8px; font-family: var(--font-display); display: flex; align-items: center; gap: 8px; }
+.backup-card p { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+
+.backup-warning {
+  background: var(--priority-med-bg); color: var(--priority-med); border-radius: 10px;
+  padding: 12px 14px; font-size: 12.5px; margin-bottom: 16px; display: flex; gap: 10px; align-items: flex-start;
+}
+.backup-warning .icon { flex-shrink: 0; margin-top: 1px; }
+
+.file-input-row { display: flex; align-items: center; gap: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="backup-wrap">
+  <div class="backup-header">
+    <h1>{% include "icons.html" with icon="download" size=20 %} Backup &amp; Restore</h1>
+  </div>
+
+  <div class="backup-warning">
+    <span class="icon">{% include "icons.html" with icon="circle-alert" size=15 %}</span>
+    <span>
+      Importing only <strong>adds</strong> habits and entries that aren't already in your account —
+      it never overwrites or merges conflicting data. Re-importing the same backup twice is safe
+      (duplicates are skipped by id), but there's no way to "roll back" to an older backup over
+      newer data through this page.
+    </span>
+  </div>
+
+  <div class="backup-card">
+    <h2>{% include "icons.html" with icon="download" size=15 %} Export</h2>
+    <p>Download every habit, checklist item, entry, and your preferences as one JSON file.</p>
+    <a href="{% url 'habit_export_json' %}" class="btn btn--primary">{% include "icons.html" with icon="download" size=14 %} Download backup</a>
+  </div>
+
+  <div class="backup-card">
+    <h2>{% include "icons.html" with icon="upload" size=15 %} Import</h2>
+    <p>Restore from a previously downloaded backup file.</p>
+    <form method="post" action="{% url 'habit_import_json' %}" enctype="multipart/form-data" class="file-input-row">
+      {% csrf_token %}
+      <input type="file" name="file" accept="application/json,.json" required>
+      <button type="submit" class="btn btn--primary">{% include "icons.html" with icon="upload" size=14 %} Import</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

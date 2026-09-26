@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ habit.text }} — Stats{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.stats-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 10px; }
+.stats-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; }
+.stats-subtitle { color: var(--ink-faint); font-size: 13px; margin-bottom: 18px; }
+.stats-header-actions { display: flex; gap: 8px; }
+
+.range-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.range-form label { font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; }
+.range-form input { padding: 5px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.field-errors { background: var(--priority-high-bg); color: var(--priority-high); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+
+.report-card-banner {
+  display: flex; align-items: center; gap: 16px; background: var(--paper-raised); border: 1px solid var(--line);
+  border-radius: 12px; padding: 18px; margin-bottom: 18px;
+}
+.report-card-grade {
+  width: 64px; height: 64px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 700; font-family: var(--font-mono); color: #fff; flex-shrink: 0;
+}
+.grade-A { background: var(--accent); }
+.grade-B { background: #4E9C87; }
+.grade-C { background: var(--priority-med); }
+.grade-D { background: #C97A4A; }
+.grade-F { background: var(--priority-high); }
+.report-card-info .title { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+.report-card-info .sub { font-size: 12px; color: var(--ink-faint); }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+@media (max-width: 600px) { .grid { grid-template-columns: repeat(1, 1fr); } }
+.stat-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px; text-align: center; }
+.stat-card .num { font-size: 20px; font-weight: 700; font-family: var(--font-mono); }
+.stat-card .lbl { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+.stat-card .sub-pct { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+.stats-section { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+.stats-section h2 { font-size: 15px; margin: 0 0 14px; font-family: var(--font-display); display: flex; align-items: center; gap: 8px; }
+.chart-wrap { max-width: 900px; }
+
+/* Streak calendar */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 4px; }
+.heatmap-outer { display: flex; }
+.heatmap-weekday-labels { display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px; margin-right: 6px; }
+.heatmap-weekday-labels span { font-size: 10px; color: var(--ink-faint); display: flex; align-items: center; height: 20px; }
+.heatmap { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 4px; width: max-content; }
+.heat-cell { width: 20px; height: 20px; border-radius: 5px; background: var(--line-soft); position: relative; }
+.heat-cell.heat-blank { visibility: hidden; }
+.heat-cell.level-none { background: var(--line-soft); }
+.heat-cell.level-red { background: var(--priority-high); }
+.heat-cell.level-yellow { background: var(--priority-med); }
+.heat-cell.level-green { background: var(--accent); }
+.heat-cell.level-grace { background: var(--priority-low); }
+.heat-cell:hover::after {
+  content: attr(data-tooltip); position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 11px; padding: 4px 8px; border-radius: 6px;
+  white-space: nowrap; z-index: 5; pointer-events: none;
+}
+.heatmap-legend { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 11.5px; color: var(--ink-soft); flex-wrap: wrap; }
+.legend-swatch { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-wrap">
+  <div class="stats-header">
+    <h1>{{ habit.text }}</h1>
+    <div class="stats-header-actions">
+      <a href="{% url 'habit_edit' habit.id %}" class="btn btn--ghost">{% include "icons.html" with icon="edit" size=14 %} Edit</a>
+      <a href="{% url 'stats_overview' %}" class="btn btn--primary">{% include "icons.html" with icon="chart-bar" size=14 %} All stats</a>
+    </div>
+  </div>
+  <div class="stats-subtitle">{{ habit.get_habit_type_display }} &middot; {{ habit.get_section_display }}</div>
+
+  <div class="report-card-banner">
+    <div class="report-card-grade grade-{{ report_card.grade }}">{{ report_card.grade }}</div>
+    <div class="report-card-info">
+      <div class="title">Report Card — last {{ report_card.window_days }} days</div>
+      <div class="sub">{{ report_card.pct }}% completion across {{ report_card.logged_days }} logged day{{ report_card.logged_days|pluralize }}</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="stat-card">
+      <div class="num">{{ current_streak }}</div>
+      <div class="lbl">Current streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ longest_streak }}</div>
+      <div class="lbl">Longest streak ever</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ completed_days }}/{{ logged_days }}</div>
+      <div class="lbl">Completed (selected range)</div>
+      <div class="sub-pct">{{ pct }}%</div>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="calendar" size=16 %} This week / month / year</h2>
+    <div class="grid" style="margin-bottom:0;">
+      <div class="stat-card">
+        <div class="num">{{ period_summary.week.pct }}%</div>
+        <div class="lbl">This week</div>
+        <div class="sub-pct">{{ period_summary.week.completed }}/{{ period_summary.week.total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">{{ period_summary.month.pct }}%</div>
+        <div class="lbl">This month</div>
+        <div class="sub-pct">{{ period_summary.month.completed }}/{{ period_summary.month.total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">{{ period_summary.year.pct }}%</div>
+        <div class="lbl">This year</div>
+        <div class="sub-pct">{{ period_summary.year.completed }}/{{ period_summary.year.total }}</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="get" class="range-form">
+    <label>From {{ range_form.start }}</label>
+    <label>To {{ range_form.end }}</label>
+    <button type="submit" class="btn btn--primary">Update trend &amp; calendar</button>
+    {% if range_form.errors %}<span class="field-errors">{{ range_form.errors }}</span>{% endif %}
+  </form>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="trending-up" size=16 %} Completion trend</h2>
+    <div class="chart-wrap"><canvas id="trendChart" height="80"></canvas></div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="flame" size=16 %} Streak calendar</h2>
+    <div class="heatmap-scroll">
+      <div class="heatmap-outer">
+        <div class="heatmap-weekday-labels">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <div class="heatmap">
+          {% for week in calendar_weeks %}
+            {% for cell in week %}
+              {% if cell %}
+              <div class="heat-cell level-{{ cell.level }}"
+                   data-tooltip="{{ cell.date|date:'M j' }} — {% if cell.logged %}{% if cell.level == 'grace' %}grace day used{% elif cell.completed %}completed{% else %}missed{% endif %}{% else %}no entry{% endif %}"></div>
+              {% else %}
+              <div class="heat-cell heat-blank"></div>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="heatmap-legend">
+      <span class="legend-item"><span class="legend-swatch level-green"></span> Completed</span>
+      <span class="legend-item"><span class="legend-swatch level-grace"></span> Grace day</span>
+      <span class="legend-item"><span class="legend-swatch level-red"></span> Missed</span>
+      <span class="legend-item"><span class="legend-swatch level-none"></span> No entry</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function () {
+  const labels = [{% for row in daily_rows %}"{{ row.date|date:'M j' }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const rates  = [{% for row in daily_rows %}{% if row.logged %}{{ row.pct }}{% else %}null{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--accent').trim() || '#2F6F62';
+  const ink = styles.getPropertyValue('--ink-soft').trim() || '#4B5750';
+  const line = styles.getPropertyValue('--line').trim() || '#DEE1D8';
+
+  const ctx = document.getElementById('trendChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Completion %',
+          data: rates,
+          borderColor: accent,
+          backgroundColor: accent + '33',
+          fill: true,
+          tension: 0.3,
+          spanGaps: false,
+          pointRadius: labels.length > 60 ? 0 : 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: ink, callback: (v) => v + '%' }, grid: { color: line } },
+          x: { ticks: { color: ink, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        },
+      },
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Daybook — {{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.report-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+
+.report-header {
+  margin-bottom: 24px; display: flex; align-items: flex-start;
+  justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.report-header h1 { font-size: 24px; margin: 0 0 4px; font-family: var(--font-display); font-weight: 600; }
+.report-subtitle { color: var(--ink-faint); font-size: 13px; }
+.report-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.period-nav {
+  display: flex; align-items: center; gap: 4px; background: var(--paper-raised);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px;
+}
+.period-nav a {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 999px; color: var(--ink-soft);
+  text-decoration: none;
+}
+.period-nav a:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.period-nav a.disabled { color: var(--line); pointer-events: none; }
+
+/* ---- Stat cards ---- */
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+@media (max-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+.stat-card {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.stat-card .stat-card-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-card .icon-wrap {
+  width: 28px; height: 28px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-strong);
+}
+.stat-card .num { font-size: 24px; font-weight: 700; font-family: var(--font-mono); }
+.stat-card .lbl { font-size: 11.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; }
+
+.report-section {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px; margin-bottom: 18px;
+}
+.report-section h2 {
+  font-size: 15px; margin: 0 0 16px; font-family: var(--font-display); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.report-section h2 .icon { color: var(--accent); }
+
+/* ---- Heatmap grid ---- */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 4px; }
+.heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
+  width: max-content;
+}
+.heatmap-weekday-labels {
+  display: grid; grid-template-rows: repeat(7, 1fr); gap: 4px; margin-right: 6px;
+}
+.heatmap-weekday-labels span {
+  font-size: 10px; color: var(--ink-faint); display: flex; align-items: center; height: 26px;
+}
+.heatmap-outer { display: flex; }
+.heat-cell {
+  width: 26px; height: 26px; border-radius: 6px; position: relative;
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  cursor: default;
+}
+.heat-cell.heat-blank { visibility: hidden; }
+.heat-cell.level-none { background: var(--line-soft); border-color: var(--line); }
+.heat-cell.level-red { background: var(--clay, #C1502E); border-color: var(--clay, #C1502E); }
+.heat-cell.level-yellow { background: var(--amber, #B7871F); border-color: var(--amber, #B7871F); }
+.heat-cell.level-green { background: var(--accent); border-color: var(--accent); }
+.heat-cell.is-today { box-shadow: 0 0 0 2px var(--ink) inset; }
+.heat-cell:hover::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 11px; padding: 5px 8px;
+  border-radius: 6px; white-space: nowrap; z-index: 5; pointer-events: none;
+  font-family: var(--font-body);
+}
+.heat-cell:hover::before {
+  content: ""; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--ink); margin-bottom: -1px; z-index: 5;
+}
+.heatmap-legend {
+  display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap;
+  font-size: 12px; color: var(--ink-soft);
+}
+.heatmap-legend .legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 13px; height: 13px; border-radius: 4px; display: inline-block; }
+.legend-swatch.level-red { background: var(--clay, #C1502E); }
+.legend-swatch.level-yellow { background: var(--amber, #B7871F); }
+.legend-swatch.level-green { background: var(--accent); }
+.legend-swatch.level-none { background: var(--line-soft); border: 1px solid var(--line); }
+
+/* ---- Category / priority bars ---- */
+.bar-row-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 4px 24px; }
+.chart-wrap { max-width: 900px; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bar-label { width: 110px; font-size: 13px; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--line); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { background: var(--accent); height: 100%; border-radius: 999px; }
+.bar-fill.priority-high { background: var(--priority-high); }
+.bar-fill.priority-medium { background: var(--priority-med); }
+.bar-fill.priority-low { background: var(--priority-low); }
+.bar-count { width: 30px; text-align: right; font-size: 12px; color: var(--ink-soft); font-family: var(--font-mono); }
+.empty-note { color: var(--ink-faint); font-size: 13px; font-style: italic; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+.highlight-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line-soft); font-size: 13.5px; }
+.highlight-row:last-child { border-bottom: none; }
+.highlight-row .icon-wrap {
+  width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent-strong); flex-shrink: 0;
+}
+
+/* ---- Day table ---- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--ink-faint); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+tr.missed td { color: var(--ink-faint); font-style: italic; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.badge--ok { background: var(--accent-soft); color: var(--accent-strong); }
+.badge--warn { background: var(--priority-med-bg); color: var(--priority-med); }
+.badge--miss { background: var(--priority-high-bg); color: var(--priority-high); }
+.day-link { color: inherit; text-decoration: none; }
+.day-link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-wrap">
+  <div class="report-header">
+    <div>
+      <h1>{{ title }}</h1>
+      <div class="report-subtitle">{{ period_label }} &middot; generated {{ today|date:"Y-m-d" }}</div>
+    </div>
+    <div class="report-nav">
+      {% if report_type != 'custom' %}
+      <div class="period-nav">
+        <a href="{{ prev_url }}" title="Previous period">{% include "icons.html" with icon="chevron-left" size=16 %}</a>
+        <a href="{% if show_next %}{{ next_url }}{% endif %}" class="{% if not show_next %}disabled{% endif %}" title="Next period">{% include "icons.html" with icon="chevron-right" size=16 %}</a>
+      </div>
+      {% endif %}
+      {% if report_type == 'monthly' %}
+      <a href="{% url 'weekly_report' %}" class="btn btn--ghost">{% include "icons.html" with icon="chart-bar" size=14 %} Weekly</a>
+      {% elif report_type == 'weekly' %}
+      <a href="{% url 'monthly_report' %}" class="btn btn--ghost">{% include "icons.html" with icon="calendar" size=14 %} Monthly</a>
+      {% endif %}
+      <a href="{% url 'custom_report' %}" class="btn btn--ghost{% if report_type == 'custom' %} btn--primary{% endif %}">{% include "icons.html" with icon="calendar" size=14 %} Custom range</a>
+      <a href="{% if report_type == 'weekly' %}{% url 'weekly_report_pdf' %}{% elif report_type == 'monthly' %}{% url 'monthly_report_pdf' %}{% else %}{% url 'custom_report_pdf' %}?start={{ start|date:'Y-m-d' }}&end={{ end|date:'Y-m-d' }}{% endif %}"
+         class="btn btn--ghost">{% include "icons.html" with icon="download" size=14 %} PDF</a>
+    </div>
+  </div>
+
+  {% if report_type == 'custom' %}
+  <form method="get" class="report-section" style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
+    <div>
+      <label style="display:block; font-size:11px; color:var(--ink-faint); margin-bottom:4px;">Start</label>
+      {{ custom_form.start }}
+    </div>
+    <div>
+      <label style="display:block; font-size:11px; color:var(--ink-faint); margin-bottom:4px;">End</label>
+      {{ custom_form.end }}
+    </div>
+    <button type="submit" class="btn btn--primary">Update</button>
+    {% if custom_form.errors %}
+    <div class="field-errors" style="width:100%;">{{ custom_form.errors }}</div>
+    {% endif %}
+  </form>
+  {% endif %}
+
+  <!-- Stat cards -->
+  <div class="grid">
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="icon-wrap">{% include "icons.html" with icon="layers" size=15 %}</span>
+      </div>
+      <span class="num">{{ total_tasks }}</span>
+      <span class="lbl">Total tasks</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="icon-wrap">{% include "icons.html" with icon="circle-check" size=15 %}</span>
+      </div>
+      <span class="num">{{ total_completed }}</span>
+      <span class="lbl">Completed</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="icon-wrap">{% include "icons.html" with icon="target" size=15 %}</span>
+      </div>
+      <span class="num">{{ completion_pct }}%</span>
+      <span class="lbl">Completion rate</span>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="icon-wrap">{% include "icons.html" with icon="trending-up" size=15 %}</span>
+      </div>
+      <span class="num">{{ avg_daily_pct }}%</span>
+      <span class="lbl">Avg daily rate</span>
+    </div>
+  </div>
+
+  <!-- Heatmap grid -->
+  <div class="report-section">
+    <h2>{% include "icons.html" with icon="calendar" size=16 %} Completion heatmap</h2>
+    <div class="heatmap-scroll">
+      <div class="heatmap-outer">
+        <div class="heatmap-weekday-labels">
+          {% for wd in weekday_labels %}<span>{{ wd }}</span>{% endfor %}
+        </div>
+        <div class="heatmap">
+          {% for week in calendar_weeks %}
+            {% for cell in week %}
+              {% if cell %}
+                <div class="heat-cell level-{{ cell.level }}{% if cell.date == today %} is-today{% endif %}"
+                     data-tooltip="{{ cell.date|date:'M j' }} — {% if cell.logged %}{{ cell.completed }}/{{ cell.total }} ({{ cell.pct }}%){% else %}no log{% endif %}"></div>
+              {% else %}
+                <div class="heat-cell heat-blank"></div>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="heatmap-legend">
+      <span class="legend-item"><span class="legend-swatch level-green"></span> 100% complete</span>
+      <span class="legend-item"><span class="legend-swatch level-yellow"></span> 75–99% complete</span>
+      <span class="legend-item"><span class="legend-swatch level-red"></span> Below 75%</span>
+      <span class="legend-item"><span class="legend-swatch level-none"></span> No log</span>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Highlights -->
+    <div class="report-section">
+      <h2>{% include "icons.html" with icon="award" size=16 %} Highlights</h2>
+
+      <div class="highlight-row">
+        <span class="icon-wrap">{% include "icons.html" with icon="trending-up" size=13 %}</span>
+        <span>
+          <strong>Most productive day:</strong>
+          {% if most_productive_day and most_productive_day.1 > 0 %}
+            {{ most_productive_day.0|date:"D, M j" }} — {{ most_productive_day.1 }} completed
+          {% else %}No completed tasks yet{% endif %}
+        </span>
+      </div>
+
+      <div class="highlight-row">
+        <span class="icon-wrap">{% include "icons.html" with icon="circle-check" size=13 %}</span>
+        <span>
+          <strong>Best completion rate:</strong>
+          {% if best_day %}{{ best_day.0|date:"D, M j" }} — {{ best_day.1 }}%{% else %}n/a{% endif %}
+        </span>
+      </div>
+
+      <div class="highlight-row">
+        <span class="icon-wrap">{% include "icons.html" with icon="circle-alert" size=13 %}</span>
+        <span>
+          <strong>Lowest completion rate:</strong>
+          {% if worst_day %}{{ worst_day.0|date:"D, M j" }} — {{ worst_day.1 }}%{% else %}n/a{% endif %}
+        </span>
+      </div>
+
+      <div class="highlight-row">
+        <span class="icon-wrap">{% include "icons.html" with icon="flame" size=13 %}</span>
+        <span>
+          <strong>Longest perfect-day streak:</strong>
+          {{ longest_green_streak }} day{{ longest_green_streak|pluralize }}
+        </span>
+      </div>
+
+      <div class="highlight-row">
+        <span class="icon-wrap">{% include "icons.html" with icon="layers" size=13 %}</span>
+        <span>
+          <strong>Active vs. missed:</strong>
+          {{ active_days|length }} active / {{ missed_days|length }} missed
+          (of {{ elapsed_days_count }} elapsed)
+        </span>
+      </div>
+    </div>
+
+    <!-- Priority breakdown -->
+    <div class="report-section">
+      <h2>{% include "icons.html" with icon="target" size=16 %} Completed by priority</h2>
+      {% if priority_breakdown %}
+        <div class="bar-row-grid">
+        {% for priority, count in priority_breakdown %}
+        <div class="bar-row">
+          <div class="bar-label">{{ priority }}</div>
+          <div class="bar-track">
+            <div class="bar-fill priority-{{ priority|lower }}" style="width:{% widthratio count total_completed 100 %}%"></div>
+          </div>
+          <div class="bar-count">{{ count }}</div>
+        </div>
+        {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-note">No completed tasks in this period yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Trend chart -->
+  <div class="report-section">
+    <h2>{% include "icons.html" with icon="trending-up" size=16 %} Completion trend</h2>
+    <div class="chart-wrap"><canvas id="trendChart" height="90"></canvas></div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="report-section">
+    <h2>{% include "icons.html" with icon="layers" size=16 %} Category breakdown (completed tasks)</h2>
+    {% if category_breakdown %}
+      <div class="bar-row-grid">
+      {% for category, count in category_breakdown %}
+      <div class="bar-row">
+        <div class="bar-label">{{ category }}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:{% widthratio count category_max 100 %}%"></div>
+        </div>
+        <div class="bar-count">{{ count }}</div>
+      </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-note">No completed tasks with categories in this period yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Day-by-day table -->
+  <div class="report-section">
+    <h2>{% include "icons.html" with icon="file-text" size=16 %} Day-by-day log</h2>
+    <table>
+      <thead>
+        <tr><th>Day</th><th>Completed</th><th>Rate</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for row in daily_rows %}
+        {% if not row.logged %}
+        <tr class="missed">
+          <td>{{ row.date|date:"D Y-m-d" }}</td>
+          <td>—</td><td>—</td>
+          <td><span class="badge badge--miss">No log</span></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td><a href="/?date={{ row.date|date:'Y-m-d' }}" class="day-link">{{ row.date|date:"D Y-m-d" }}</a></td>
+          <td>{{ row.completed }}/{{ row.total }}</td>
+          <td>{{ row.pct }}%</td>
+          <td>
+            {% if row.level == 'green' %}
+              <span class="badge badge--ok">{% include "icons.html" with icon="circle-check" size=11 %} Complete</span>
+            {% elif row.level == 'yellow' %}
+              <span class="badge badge--warn">{% include "icons.html" with icon="circle" size=11 %} Good</span>
+            {% else %}
+              <span class="badge badge--miss">{% include "icons.html" with icon="circle-alert" size=11 %} Behind</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="app-footer">
+    Daybook &middot; data from SQLite &middot; <a href="{% url 'index' %}" class="footer-link">back to today</a>
+  </footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function () {
+  const labels = [{% for row in daily_rows %}"{{ row.date|date:'M j' }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  const rates  = [{% for row in daily_rows %}{% if row.logged %}{{ row.pct }}{% else %}null{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--accent').trim() || '#2F6F62';
+  const ink = styles.getPropertyValue('--ink-soft').trim() || '#4B5750';
+  const line = styles.getPropertyValue('--line').trim() || '#DEE1D8';
+
+  const ctx = document.getElementById('trendChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Completion %',
+          data: rates,
+          borderColor: accent,
+          backgroundColor: accent + '33',
+          fill: true,
+          tension: 0.3,
+          spanGaps: false,
+          pointRadius: labels.length > 40 ? 0 : 3,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: ink, callback: (v) => v + '%' }, grid: { color: line } },
+          x: { ticks: { color: ink, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        },
+      },
+    });
+  }
+})();
+</script>
+{% endblock %}

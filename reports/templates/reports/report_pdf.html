@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 1.6cm; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1B2420; font-size: 10.5px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .subtitle { color: #8A9289; font-size: 11px; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th, td { padding: 5px 7px; border: 1px solid #DEE1D8; text-align: left; font-size: 10px; }
+  th { background: #F5F6F1; color: #4B5750; text-transform: uppercase; font-size: 8.5px; }
+  h2 { font-size: 13px; margin: 18px 0 8px; border-bottom: 1px solid #DEE1D8; padding-bottom: 4px; }
+  .stat-table td { text-align: center; }
+  .stat-table .num { font-size: 16px; font-weight: bold; display: block; }
+  .stat-table .lbl { font-size: 8px; color: #8A9289; text-transform: uppercase; }
+  .heat-green  { background-color: #2F6F62; color: #ffffff; text-align: center; }
+  .heat-yellow { background-color: #B7871F; color: #ffffff; text-align: center; }
+  .heat-red    { background-color: #C1502E; color: #ffffff; text-align: center; }
+  .heat-none   { background-color: #EAECE5; color: #8A9289; text-align: center; }
+  .bar-outer { background: #DEE1D8; height: 8px; width: 100%; }
+  .bar-inner { background: #2F6F62; height: 8px; }
+  .missed-row td { color: #8A9289; font-style: italic; }
+  footer-note { color: #8A9289; font-size: 8.5px; }
+</style>
+</head>
+<body>
+  <h1>Daybook &mdash; {{ title }}</h1>
+  <div class="subtitle">{{ period_label }} &middot; generated {{ today|date:"Y-m-d" }}</div>
+
+  <table class="stat-table">
+    <tr>
+      <td><span class="num">{{ total_tasks }}</span><span class="lbl">Total tasks</span></td>
+      <td><span class="num">{{ total_completed }}</span><span class="lbl">Completed</span></td>
+      <td><span class="num">{{ completion_pct }}%</span><span class="lbl">Completion rate</span></td>
+      <td><span class="num">{{ avg_daily_pct }}%</span><span class="lbl">Avg daily rate</span></td>
+    </tr>
+  </table>
+
+  <h2>Highlights</h2>
+  <table>
+    <tr><td><strong>Most productive day</strong></td>
+      <td>{% if most_productive_day and most_productive_day.1 > 0 %}{{ most_productive_day.0|date:"D, M j" }} &mdash; {{ most_productive_day.1 }} completed{% else %}No completed tasks yet{% endif %}</td></tr>
+    <tr><td><strong>Best completion rate</strong></td>
+      <td>{% if best_day %}{{ best_day.0|date:"D, M j" }} &mdash; {{ best_day.1 }}%{% else %}n/a{% endif %}</td></tr>
+    <tr><td><strong>Lowest completion rate</strong></td>
+      <td>{% if worst_day %}{{ worst_day.0|date:"D, M j" }} &mdash; {{ worst_day.1 }}%{% else %}n/a{% endif %}</td></tr>
+    <tr><td><strong>Longest perfect-day streak</strong></td><td>{{ longest_green_streak }} day{{ longest_green_streak|pluralize }}</td></tr>
+    <tr><td><strong>Active vs. missed</strong></td><td>{{ active_days|length }} active / {{ missed_days|length }} missed (of {{ elapsed_days_count }} elapsed)</td></tr>
+  </table>
+
+  <h2>Completion heatmap</h2>
+  <table>
+    <tr>{% for wd in weekday_labels %}<th>{{ wd }}</th>{% endfor %}</tr>
+    {% for row in daily_rows %}
+      {% if forloop.first or forloop.counter0|divisibleby:7 %}<tr>{% endif %}
+      <td class="heat-{{ row.level }}">
+        {{ row.date|date:"j" }}{% if row.logged %}<br>{{ row.pct }}%{% endif %}
+      </td>
+      {% if forloop.counter|divisibleby:7 or forloop.last %}</tr>{% endif %}
+    {% endfor %}
+  </table>
+
+  <h2>Category breakdown (completed tasks)</h2>
+  <table>
+    <tr><th>Category</th><th>Completed</th><th></th></tr>
+    {% for category, count in category_breakdown %}
+    <tr>
+      <td>{{ category }}</td>
+      <td>{{ count }}</td>
+      <td style="width:120px;"><div class="bar-outer"><div class="bar-inner" style="width:{% widthratio count category_max 100 %}%;"></div></div></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">No completed tasks with categories in this period.</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Day-by-day log</h2>
+  <table>
+    <tr><th>Day</th><th>Completed</th><th>Rate</th><th>Status</th></tr>
+    {% for row in daily_rows %}
+      {% if not row.logged %}
+      <tr class="missed-row"><td>{{ row.date|date:"D Y-m-d" }}</td><td>&mdash;</td><td>&mdash;</td><td>No log</td></tr>
+      {% else %}
+      <tr>
+        <td>{{ row.date|date:"D Y-m-d" }}</td>
+        <td>{{ row.completed }}/{{ row.total }}</td>
+        <td>{{ row.pct }}%</td>
+        <td>{% if row.level == 'green' %}Complete{% elif row.level == 'yellow' %}Good{% else %}Behind{% endif %}</td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+
+  <p class="footer-note">Daybook &middot; generated from SQLite data on the server &middot; not shared anywhere else.</p>
+</body>
+</html>

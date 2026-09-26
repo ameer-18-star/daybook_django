@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Habit Stats{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.stats-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.stats-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.stats-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.range-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.range-form label { font-size: 12px; color: var(--ink-soft); display: flex; align-items: center; gap: 6px; }
+.range-form input { padding: 5px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.field-errors { background: var(--priority-high-bg); color: var(--priority-high); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+@media (max-width: 600px) { .grid { grid-template-columns: repeat(1, 1fr); } }
+.stat-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-card .num { font-size: 24px; font-weight: 700; font-family: var(--font-mono); }
+.stat-card .lbl { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+
+.stats-section { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+.stats-section h2 { font-size: 15px; margin: 0 0 14px; font-family: var(--font-display); display: flex; align-items: center; gap: 8px; }
+
+.bar-row-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 4px 24px; }
+.bar-row-grid .empty-state { grid-column: 1 / -1; }
+.chart-wrap { max-width: 900px; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bar-label { width: 130px; font-size: 13px; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--line); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { background: var(--accent); height: 100%; border-radius: 999px; }
+.bar-count { width: 70px; text-align: right; font-size: 12px; color: var(--ink-soft); font-family: var(--font-mono); }
+
+.top-habit-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--line-soft); }
+.top-habit-row:last-child { border-bottom: none; }
+.top-habit-name { flex: 1; font-size: 13.5px; font-weight: 600; }
+.grade-badge {
+  display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: 7px; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #fff;
+}
+.grade-A { background: var(--accent); }
+.grade-B { background: #4E9C87; }
+.grade-C { background: var(--priority-med); }
+.grade-D { background: #C97A4A; }
+.grade-F { background: var(--priority-high); }
+.top-habit-meta { font-size: 11.5px; color: var(--ink-faint); display: flex; gap: 8px; align-items: center; }
+
+/* Year heatmap */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 4px; }
+.heatmap-outer { display: flex; }
+.heatmap-weekday-labels { display: grid; grid-template-rows: repeat(7, 1fr); gap: 3px; margin-right: 6px; }
+.heatmap-weekday-labels span { font-size: 9px; color: var(--ink-faint); display: flex; align-items: center; height: 12px; }
+.heatmap { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; width: max-content; }
+.heat-cell { width: 12px; height: 12px; border-radius: 3px; background: var(--line-soft); position: relative; }
+.heat-cell.heat-blank { visibility: hidden; }
+.heat-cell.level-none { background: var(--line-soft); }
+.heat-cell.level-red { background: var(--priority-high); }
+.heat-cell.level-yellow { background: var(--priority-med); }
+.heat-cell.level-green { background: var(--accent); }
+.heat-cell:hover::after {
+  content: attr(data-tooltip); position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-size: 10.5px; padding: 4px 7px; border-radius: 5px;
+  white-space: nowrap; z-index: 5; pointer-events: none;
+}
+.heatmap-legend { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 11.5px; color: var(--ink-soft); flex-wrap: wrap; }
+.legend-swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-wrap">
+  <div class="stats-header">
+    <h1>{% include "icons.html" with icon="chart-bar" size=20 %} Habit Stats</h1>
+    <div class="stats-header-actions">
+      <a href="{% url 'habit_export_json' %}" class="btn btn--primary">{% include "icons.html" with icon="download" size=14 %} Download my data</a>
+    </div>
+  </div>
+
+  <form method="get" class="range-form">
+    <label>From {{ range_form.start }}</label>
+    <label>To {{ range_form.end }}</label>
+    <button type="submit" class="btn btn--primary">Update</button>
+    {% if range_form.errors %}<span class="field-errors">{{ range_form.errors }}</span>{% endif %}
+  </form>
+
+  <div class="grid">
+    <div class="stat-card">
+      <div class="num">{{ total_entries }}</div>
+      <div class="lbl">Habit check-ins</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ total_completed }}</div>
+      <div class="lbl">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ completion_pct }}%</div>
+      <div class="lbl">Completion rate</div>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="layers" size=16 %} Section breakdown</h2>
+    <div class="bar-row-grid">
+    {% for s in section_breakdown %}
+    <div class="bar-row">
+      <div class="bar-label">{{ s.label }}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ s.pct }}%;"></div></div>
+      <div class="bar-count">{{ s.completed }}/{{ s.total }} ({{ s.pct }}%)</div>
+    </div>
+    {% empty %}
+    <p class="empty-state">No habit activity in this range yet.</p>
+    {% endfor %}
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="award" size=16 %} Top habits</h2>
+    <div class="bar-row-grid">
+    {% for item in top_habits %}
+    <div class="top-habit-row">
+      <span class="grade-badge grade-{{ item.grade }}">{{ item.grade }}</span>
+      <span class="top-habit-name">
+        <a href="{% url 'habit_stats_detail' item.habit.id %}" style="color:inherit; text-decoration:none;">{{ item.habit.text }}</a>
+      </span>
+      <span class="top-habit-meta">
+        {% include "icons.html" with icon="flame" size=12 %} {{ item.streak }}
+        &middot; {{ item.completed }}/{{ item.total }} ({{ item.pct }}%)
+      </span>
+    </div>
+    {% empty %}
+    <p class="empty-state">No habit activity in this range yet.</p>
+    {% endfor %}
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="clock" size=16 %} Time of day</h2>
+    <div class="chart-wrap"><canvas id="timeOfDayChart" height="90"></canvas></div>
+  </div>
+
+  <div class="stats-section">
+    <h2>{% include "icons.html" with icon="calendar" size=16 %} {{ year_heatmap.year }} overview</h2>
+    <div class="heatmap-scroll">
+      <div class="heatmap-outer">
+        <div class="heatmap-weekday-labels">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <div class="heatmap">
+          {% for week in year_heatmap.weeks %}
+            {% for cell in week %}
+              {% if cell %}
+              <div class="heat-cell level-{{ cell.level }}"
+                   data-tooltip="{{ cell.date|date:'M j' }} — {% if cell.logged %}{{ cell.completed }}/{{ cell.total }} ({{ cell.pct }}%){% else %}no activity{% endif %}"></div>
+              {% else %}
+              <div class="heat-cell heat-blank"></div>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="heatmap-legend">
+      <span class="legend-item"><span class="legend-swatch level-green"></span> 100%</span>
+      <span class="legend-item"><span class="legend-swatch level-yellow"></span> 75–99%</span>
+      <span class="legend-item"><span class="legend-swatch level-red"></span> Below 75%</span>
+      <span class="legend-item"><span class="legend-swatch level-none"></span> No activity</span>
+      <span class="legend-item">{{ year_heatmap.total_perfect_days }} perfect days &middot; {{ year_heatmap.total_logged_days }} active days</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function () {
+  const styles = getComputedStyle(document.documentElement);
+  const accent = styles.getPropertyValue('--accent').trim() || '#2F6F62';
+  const ink = styles.getPropertyValue('--ink-soft').trim() || '#4B5750';
+  const line = styles.getPropertyValue('--line').trim() || '#DEE1D8';
+
+  const ctx = document.getElementById('timeOfDayChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Morning', 'Afternoon', 'Evening', 'Night'],
+        datasets: [{
+          label: 'Completions',
+          data: [
+            {{ time_of_day.morning }}, {{ time_of_day.afternoon }},
+            {{ time_of_day.evening }}, {{ time_of_day.night }}
+          ],
+          backgroundColor: accent,
+          borderRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: ink, precision: 0 }, grid: { color: line } },
+          x: { ticks: { color: ink }, grid: { display: false } },
+        },
+      },
+    });
+  }
+})();
+</script>
+{% endblock %}

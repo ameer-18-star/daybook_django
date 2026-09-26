@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Habit{% else %}New Habit{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.habit-form-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.habit-form-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.habit-form-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; }
+.form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.form-row > * { flex: 1; min-width: 140px; }
+.form-field { margin-bottom: 14px; }
+.form-field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 600; }
+.field-errors { background: var(--priority-high-bg); color: var(--priority-high); border-radius: 8px; padding: 6px 10px; font-size: 12px; margin-top: 4px; }
+.type-only-section { display: none; }
+.type-only-section.is-active { display: block; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.checkbox-row label { font-size: 13px; margin: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="habit-form-wrap">
+  <div class="habit-form-header">
+    <h1>{% if is_edit %}Edit habit{% else %}New habit{% endif %}</h1>
+  </div>
+
+  {% if form.non_field_errors %}
+  <div class="field-errors" style="margin-bottom:14px;">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <form method="post" class="card" style="padding:20px;">
+    {% csrf_token %}
+
+    <div class="form-field">
+      <label for="{{ form.text.id_for_label }}">Habit name</label>
+      {{ form.text }}
+      {% if form.text.errors %}<div class="field-errors">{{ form.text.errors }}</div>{% endif %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label for="{{ form.habit_type.id_for_label }}">Type</label>
+        {{ form.habit_type }}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.section.id_for_label }}">Section</label>
+        {{ form.section }}
+      </div>
+    </div>
+
+    <div class="checkbox-row">
+      {{ form.has_scheduled_time }}
+      <label for="{{ form.has_scheduled_time.id_for_label }}">Assign a specific time (leave unchecked for "anytime")</label>
+    </div>
+    <div class="form-row" id="scheduledTimeRow">
+      <div class="form-field">
+        <label for="{{ form.scheduled_time.id_for_label }}">Time</label>
+        {{ form.scheduled_time }}
+        {% if form.scheduled_time.errors %}<div class="field-errors">{{ form.scheduled_time.errors }}</div>{% endif %}
+      </div>
+      <div class="form-field">
+        <label for="{{ form.duration_minutes.id_for_label }}">Duration (minutes, optional)</label>
+        {{ form.duration_minutes }}
+      </div>
+    </div>
+
+    <!-- Numeric-only fields -->
+    <div class="type-only-section" data-type="numeric">
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ form.target_value.id_for_label }}">Target value</label>
+          {{ form.target_value }}
+          {% if form.target_value.errors %}<div class="field-errors">{{ form.target_value.errors }}</div>{% endif %}
+        </div>
+        <div class="form-field">
+          <label for="{{ form.target_unit.id_for_label }}">Unit (optional)</label>
+          {{ form.target_unit }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist-only fields -->
+    <div class="type-only-section" data-type="checklist">
+      <div class="form-field">
+        <label for="{{ form.checklist_items_text.id_for_label }}">Checklist items</label>
+        {{ form.checklist_items_text }}
+        {% if form.checklist_items_text.errors %}<div class="field-errors">{{ form.checklist_items_text.errors }}</div>{% endif %}
+        <p class="habit-form-note">Editing this list resets item history — past checked/unchecked state may not carry over exactly.</p>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label for="{{ form.grace_days_allowed.id_for_label }}">Grace days allowed</label>
+        {{ form.grace_days_allowed }}
+        <p class="habit-form-note">Lets you protect your streak on occasional misses without marking the habit complete.</p>
+      </div>
+      <div class="form-field">
+        <label for="{{ form.color.id_for_label }}">Color (optional)</label>
+        {{ form.color }}
+      </div>
+    </div>
+
+    <div class="edit-actions">
+      <a href="{% url 'habit_list' %}" class="btn btn--ghost">Cancel</a>
+      <button type="submit" class="btn btn--primary">{% if is_edit %}Save changes{% else %}Create habit{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const typeSelect = document.getElementById('{{ form.habit_type.id_for_label }}');
+  const scheduledCheckbox = document.getElementById('{{ form.has_scheduled_time.id_for_label }}');
+  const scheduledRow = document.getElementById('scheduledTimeRow');
+
+  function syncTypeSections() {
+    const type = typeSelect.value;
+    document.querySelectorAll('.type-only-section').forEach((el) => {
+      el.classList.toggle('is-active', el.dataset.type === type);
+    });
+  }
+  function syncScheduledRow() {
+    scheduledRow.style.display = scheduledCheckbox.checked ? 'flex' : 'none';
+  }
+
+  typeSelect.addEventListener('change', syncTypeSections);
+  scheduledCheckbox.addEventListener('change', syncScheduledRow);
+  syncTypeSections();
+  syncScheduledRow();
+})();
+</script>
+{% endblock %}

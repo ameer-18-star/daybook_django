@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Journal{% endblock %}
+
+{% block extra_css %}
+<style>
+.journal-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.journal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.journal-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+
+.journal-search-bar {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+}
+.journal-search-bar input[type="text"] {
+  flex: 1; min-width: 140px; border: none; outline: none; background: transparent; font-size: 13.5px; color: var(--ink);
+}
+.journal-search-bar select {
+  padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 12.5px;
+}
+
+.journal-entry-card {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+}
+.journal-entry-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.journal-entry-date { font-size: 13px; font-weight: 600; }
+.mood-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; text-transform: capitalize;
+}
+.mood-great, .mood-good { background: var(--accent-soft); color: var(--accent-strong); }
+.mood-neutral { background: var(--line-soft); color: var(--ink-soft); }
+.mood-low { background: var(--priority-med-bg); color: var(--priority-med); }
+.mood-rough { background: var(--priority-high-bg); color: var(--priority-high); }
+.journal-entries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-sm);
+  align-items: start;
+}
+.journal-entries-grid .empty-state { grid-column: 1 / -1; }
+.journal-entry-excerpt { font-size: 13px; color: var(--ink-soft); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="journal-wrap">
+  <div class="journal-header">
+    <h1>{% include "icons.html" with icon="book-open" size=20 %} Journal</h1>
+    <a href="{% url 'journal_entry' today.year today.month today.day %}" class="btn btn--primary">
+      {% include "icons.html" with icon="edit" size=14 %} {% if has_today_entry %}Edit today{% else %}Write today's entry{% endif %}
+    </a>
+  </div>
+
+  <form method="get" class="journal-search-bar">
+    {% include "icons.html" with icon="search" size=15 %}
+    <input type="text" name="q" value="{{ query }}" placeholder="Search your entries…">
+    <select name="mood">
+      <option value="">All moods</option>
+      {% for key, label in mood_choices %}
+      <option value="{{ key }}"{% if mood_filter == key %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn--ghost">Search</button>
+  </form>
+
+  <div class="journal-entries-grid">
+  {% for entry in entries %}
+  <a href="{% url 'journal_entry' entry.date.year entry.date.month entry.date.day %}" style="text-decoration:none; color:inherit;">
+    <div class="journal-entry-card">
+      <div class="journal-entry-top">
+        <span class="journal-entry-date">{{ entry.date|date:"l, F j, Y" }}</span>
+        {% if entry.mood %}<span class="mood-badge mood-{{ entry.mood }}">{{ entry.get_mood_display }}</span>{% endif %}
+      </div>
+      <p class="journal-entry-excerpt">{{ entry.text|truncatewords:30|default:"(no text)" }}</p>
+    </div>
+  </a>
+  {% empty %}
+  <p class="empty-state">{% if query or mood_filter %}No entries match your search.{% else %}No journal entries yet — write your first above.{% endif %}</p>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}

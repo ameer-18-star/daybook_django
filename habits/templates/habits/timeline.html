@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Timeline{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.timeline-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+}
+.timeline-header h1 {
+  font-family: var(--font-display); font-size: 22px; margin: 0 0 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.timeline-date-nav { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+.timeline-date-nav a {
+  display: flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: 999px; color: var(--ink-soft); text-decoration: none;
+}
+.timeline-date-nav a:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.timeline-date-nav .today-link { font-size: 12px; text-decoration: underline; margin-left: 4px; }
+.timeline-header-actions { display: flex; gap: 8px; }
+
+.timeline-settings-panel {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 16px;
+}
+.timeline-settings-panel.hidden { display: none; }
+.timeline-settings-panel form { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.timeline-settings-panel label { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.timeline-settings-panel input {
+  width: 60px; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink);
+}
+
+/* Anytime row */
+.anytime-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+.anytime-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 700; flex-shrink: 0; }
+.anytime-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.anytime-chip {
+  background: var(--paper); border-left: 4px solid var(--swatch, var(--accent));
+  border-radius: 6px; padding: 5px 10px; font-size: 12.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.anytime-chip.is-completed { text-decoration: line-through; color: var(--ink-faint); }
+.anytime-chip.is-paused { opacity: 0.6; }
+
+/* Color swatches — shared by anytime chips and event blocks */
+.color-teal   { --swatch: var(--accent); }
+.color-blue   { --swatch: var(--priority-low); }
+.color-amber  { --swatch: var(--priority-med); }
+.color-clay   { --swatch: var(--priority-high); }
+.color-purple { --swatch: #8B5FBF; }
+.color-rose   { --swatch: #C15080; }
+.color-green  { --swatch: #3F8F5F; }
+.color-slate  { --swatch: #6B7680; }
+:root[data-theme="dark"] .color-purple { --swatch: #B48EE0; }
+:root[data-theme="dark"] .color-rose   { --swatch: #E28FB0; }
+:root[data-theme="dark"] .color-green  { --swatch: #6FC48F; }
+:root[data-theme="dark"] .color-slate  { --swatch: #8A96A3; }
+
+/* Timeline grid */
+.timeline-grid { position: relative; display: flex; }
+.timeline-hour-labels { position: relative; width: 56px; flex-shrink: 0; }
+.hour-label {
+  position: absolute; transform: translateY(-50%); font-size: 11px; color: var(--ink-faint);
+  font-family: var(--font-mono); right: 10px;
+}
+.timeline-lanes-area {
+  position: relative; flex: 1; background: var(--paper-raised); border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden;
+}
+.hour-gridline { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line); }
+
+.event-block {
+  position: absolute; box-sizing: border-box; border: 2px solid var(--paper-raised);
+  border-radius: 7px; background: var(--swatch, var(--accent)); color: #fff;
+  padding: 3px 8px; font-size: 12px; font-weight: 600; overflow: hidden;
+  min-height: 22px; display: flex; align-items: center; gap: 5px;
+}
+.event-block.is-paused { opacity: 0.55; }
+.event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-check { flex-shrink: 0; display: flex; }
+
+.now-needle {
+  position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid var(--priority-high);
+  z-index: 10; pointer-events: none;
+}
+.now-needle.hidden { display: none; }
+.now-dot {
+  position: absolute; left: -4px; top: -5px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--priority-high);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="timeline-wrap">
+  <div class="timeline-header">
+    <div>
+      <h1>{% include "icons.html" with icon="columns" size=20 %} Timeline</h1>
+      <div class="timeline-date-nav">
+        <a href="?date={{ prev_date|date:'Y-m-d' }}" title="Previous day">{% include "icons.html" with icon="chevron-left" size=15 %}</a>
+        <span>{{ view_date|date:"l, F j" }}{% if is_today %} &middot; Today{% endif %}</span>
+        <a href="?date={{ next_date|date:'Y-m-d' }}" title="Next day">{% include "icons.html" with icon="chevron-right" size=15 %}</a>
+        {% if not is_today %}<a href="{% url 'habit_timeline' %}" class="today-link">Today</a>{% endif %}
+      </div>
+    </div>
+    <div class="timeline-header-actions">
+      <button type="button" id="timelineSettingsBtn" class="btn btn--ghost">{% include "icons.html" with icon="sliders" size=14 %} Hours</button>
+    </div>
+  </div>
+
+  <div class="timeline-settings-panel hidden" id="timelineSettingsPanel">
+    <form method="post" action="{% url 'update_timeline_hours' %}">
+      {% csrf_token %}
+      <label>Day starts at
+        <input type="number" name="timeline_start_hour" min="0" max="23" value="{{ user_settings.timeline_start_hour }}">:00
+      </label>
+      <label>Day ends at
+        <input type="number" name="timeline_end_hour" min="1" max="24" value="{{ user_settings.timeline_end_hour }}">:00
+      </label>
+      <button type="submit" class="btn btn--primary">Save</button>
+    </form>
+  </div>
+
+  {% if anytime_habits %}
+  <div class="anytime-row">
+    <div class="anytime-label">Anytime</div>
+    <div class="anytime-chips">
+      {% for item in anytime_habits %}
+      <div class="anytime-chip color-{{ item.color }}{% if item.entry.completed %} is-completed{% endif %}{% if item.habit.is_paused_now %} is-paused{% endif %}">
+        {{ item.habit.text }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not window_valid %}
+  <p class="empty-state">Your timeline hours are invalid (start must be before end) — adjust them above under "Hours".</p>
+  {% else %}
+  <div class="timeline-grid">
+    <div class="timeline-hour-labels" style="height:{{ timeline_height_px }}px;">
+      {% for hl in hour_labels %}
+      <div class="hour-label" style="top:{{ hl.top_pct }}%;">{{ hl.label }}</div>
+      {% endfor %}
+    </div>
+    <div class="timeline-lanes-area" id="timelineLanesArea" style="height:{{ timeline_height_px }}px;"
+         data-total-minutes="{{ total_minutes }}" data-window-start-hour="{{ user_settings.timeline_start_hour }}">
+      {% for hl in hour_labels %}
+      <div class="hour-gridline" style="top:{{ hl.top_pct }}%;"></div>
+      {% endfor %}
+
+      {% if is_today %}
+      <div class="now-needle{% if now_top_pct is None %} hidden{% endif %}" id="nowNeedle"
+           style="{% if now_top_pct is not None %}top:{{ now_top_pct }}%;{% endif %}">
+        <span class="now-dot"></span>
+      </div>
+      {% endif %}
+
+      {% for e in layout %}
+      <div class="event-block color-{{ e.color }}{% if e.habit.is_paused_now %} is-paused{% endif %}"
+           style="top:{{ e.top_pct }}%; height:{{ e.height_pct }}%; left:{{ e.left_pct }}%; width:{{ e.width_pct }}%;"
+           title="{{ e.habit.text }} — {{ e.habit.scheduled_time|time:'g:i A' }}{% if e.habit.duration_minutes %} ({{ e.habit.duration_minutes }} min){% endif %}">
+        <span class="event-title">{{ e.habit.text }}</span>
+        {% if e.entry.completed %}<span class="event-check">{% include "icons.html" with icon="check-square" size=12 %}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('timelineSettingsBtn')?.addEventListener('click', () => {
+  document.getElementById('timelineSettingsPanel')?.classList.toggle('hidden');
+});
+
+// Live current-time needle: recompute every 30s from the client's own clock,
+// rather than relying solely on the server-rendered position (so it keeps
+// moving if the page is left open).
+(function () {
+  const needle = document.getElementById('nowNeedle');
+  const area = document.getElementById('timelineLanesArea');
+  if (!needle || !area) return;
+  const totalMinutes = parseInt(area.dataset.totalMinutes, 10);
+  const windowStartHour = parseInt(area.dataset.windowStartHour, 10);
+  if (!totalMinutes) return;
+
+  function update() {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const windowStart = windowStartHour * 60;
+    const pct = ((nowMinutes - windowStart) / totalMinutes) * 100;
+    if (pct < 0 || pct > 100) {
+      needle.classList.add('hidden');
+    } else {
+      needle.classList.remove('hidden');
+      needle.style.top = pct + '%';
+    }
+  }
+  update();
+  setInterval(update, 30000);
+})();
+</script>
+{% endblock %}

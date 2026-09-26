@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Yearly Calendar{% endblock %}
+
+{% block extra_css %}
+<style>
+.yearcal-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.yearcal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.yearcal-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.yearcal-nav { display: flex; align-items: center; gap: 6px; }
+.yearcal-nav a {
+  display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border-radius: 999px; color: var(--ink-soft); text-decoration: none;
+}
+.yearcal-nav a:hover { background: var(--accent-soft); color: var(--accent-strong); }
+.yearcal-nav .year-num { font-family: var(--font-mono); font-size: 15px; padding: 0 6px; }
+
+.months-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+@media (max-width: 460px) { .months-grid { grid-template-columns: 1fr; } }
+
+.month-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.month-title { font-size: 12.5px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+.month-weekday-row, .month-week-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.month-weekday-row span { font-size: 8.5px; color: var(--ink-faint); text-align: center; }
+.month-day {
+  aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 9.5px; color: var(--ink-soft); text-decoration: none; background: var(--line-soft);
+}
+.month-day.level-green { background: var(--accent); color: #fff; }
+.month-day.level-yellow { background: var(--priority-med); color: #fff; }
+.month-day.level-red { background: var(--priority-high); color: #fff; }
+.month-day.level-none { background: var(--line-soft); color: var(--ink-faint); }
+.month-day.is-today { box-shadow: 0 0 0 2px var(--ink) inset; font-weight: 700; }
+.month-day-blank { visibility: hidden; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="yearcal-wrap">
+  <div class="yearcal-header">
+    <h1>{% include "icons.html" with icon="calendar" size=20 %} Yearly Calendar</h1>
+    <div class="yearcal-nav">
+      <a href="?year={{ prev_year }}" title="Previous year">{% include "icons.html" with icon="chevron-left" size=16 %}</a>
+      <span class="year-num">{{ year }}</span>
+      <a href="?year={{ next_year }}" title="Next year">{% include "icons.html" with icon="chevron-right" size=16 %}</a>
+    </div>
+  </div>
+
+  <div class="months-grid">
+    {% for m in months %}
+    <div class="month-card">
+      <div class="month-title">{{ m.name }}</div>
+      <div class="month-weekday-row">
+        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+      </div>
+      {% for week in m.weeks %}
+      <div class="month-week-row" style="margin-top:2px;">
+        {% for cell in week %}
+          {% if cell %}
+          <a href="{% url 'day_detail' cell.date.year cell.date.month cell.date.day %}"
+             class="month-day level-{{ cell.level }}{% if cell.is_today %} is-today{% endif %}"
+             title="{{ cell.date|date:'M j, Y' }}">{{ cell.day }}</a>
+          {% else %}
+          <span class="month-day month-day-blank"></span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

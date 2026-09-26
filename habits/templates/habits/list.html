@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Habits{% endblock %}
+
+{% block extra_css %}
+<style>
+.habits-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.habits-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.habits-header h1 { font-family: var(--font-display); font-size: 24px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.habits-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.habit-section { margin-bottom: 22px; }
+.habit-section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);
+  font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px;
+}
+.habit-section-title .count { color: var(--ink-faint); font-weight: 500; }
+
+.habit-card {
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+}
+.habit-card.is-paused { opacity: 0.6; }
+.habit-card-top { display: flex; align-items: flex-start; gap: 12px; }
+.habit-card-main { flex: 1; min-width: 0; }
+.habit-card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.habit-card-title { font-size: 14.5px; font-weight: 600; }
+.habit-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.habit-meta-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600;
+  padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--ink-soft);
+}
+.habit-streak-badge { background: var(--priority-med-bg); color: var(--priority-med); }
+.habit-streak-badge.is-zero { background: var(--line-soft); color: var(--ink-faint); }
+.habit-paused-badge { background: var(--priority-high-bg); color: var(--priority-high); }
+
+.habit-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+/* Yes/No */
+.habit-yesno-toggle {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line);
+  background: var(--paper); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: transparent; flex-shrink: 0;
+}
+.habit-yesno-toggle.is-completed { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Numeric */
+.habit-numeric-row { display: flex; align-items: center; gap: 8px; }
+.habit-numeric-input {
+  width: 90px; font-size: 13px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink);
+}
+.habit-numeric-target { font-size: 12px; color: var(--ink-faint); }
+.habit-numeric-bar-track { flex: 1; height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; min-width: 60px; }
+.habit-numeric-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+
+/* Checklist */
+.habit-checklist { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.habit-checklist-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.habit-checklist-item.is-checked .checklist-item-text { text-decoration: line-through; color: var(--ink-faint); }
+.habit-checklist-progress { font-size: 11.5px; color: var(--ink-faint); }
+
+/* Grace day button */
+.grace-day-btn {
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+  border: 1px dashed var(--priority-med); color: var(--priority-med); background: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.grace-day-btn:hover { background: var(--priority-med-bg); }
+
+/* Compact mode */
+.app.is-compact .habit-card { padding: 8px 12px; gap: 6px; margin-bottom: 6px; }
+.app.is-compact .habit-card-title { font-size: 13px; }
+.app.is-compact .habit-meta-row { margin-top: 2px; }
+.app.is-compact .habit-yesno-toggle { width: 24px; height: 24px; }
+.app.is-compact .habit-section { margin-bottom: 14px; }
+
+/* Archived */
+.archived-toggle {
+  background: none; border: none; color: var(--ink-faint); font-size: 12.5px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; margin: 20px 0 10px;
+}
+.archived-list.hidden { display: none; }
+.habit-form-note { font-size: 12px; color: var(--ink-faint); margin: -4px 0 8px; }
+
+/* Drag handle + sortable states */
+.habit-cards {
+  min-height: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-sm);
+  align-items: start;
+}
+/* Grid gap already spaces cards out — the shared .habit-card class's own
+   margin-bottom (needed for its other, non-grid use on the Tasks page)
+   would otherwise double up here. */
+.habit-cards .habit-card { margin-bottom: 0; }
+.habit-drag-handle {
+  color: var(--ink-faint); cursor: grab; display: flex; align-items: center; flex-shrink: 0;
+  touch-action: none;
+}
+.habit-drag-handle:active { cursor: grabbing; }
+.habit-card.sortable-ghost { opacity: 0.35; }
+.habit-card.sortable-chosen { box-shadow: 0 4px 14px -4px rgba(0,0,0,0.25); }
+.habit-cards.sortable-drag-active { min-height: 40px; }
+
+/* Bulk select */
+.select-checkbox { display: none; width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; }
+.habits-wrap.is-selecting .select-checkbox { display: block; }
+.habits-wrap.is-selecting .habit-drag-handle { visibility: hidden; }
+.habit-card.is-selected { border-color: var(--accent); background: var(--accent-soft); }
+
+.bulk-action-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); border-radius: 12px;
+  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--shadow-pop); z-index: 45; font-size: 13px;
+}
+.bulk-action-bar.hidden { display: none; }
+.bulk-action-bar select {
+  font-size: 12.5px; padding: 6px 8px; border-radius: 7px; border: none;
+  background: rgba(255,255,255,0.12); color: var(--paper);
+}
+.bulk-action-bar button {
+  font-size: 12.5px; font-weight: 600; padding: 6px 10px; border-radius: 7px; border: none;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+}
+.bulk-action-bar .bulk-move-btn { background: rgba(255,255,255,0.14); color: var(--paper); }
+.bulk-action-bar .bulk-archive-btn { background: rgba(255,255,255,0.14); color: var(--paper); }
+.bulk-action-bar .bulk-delete-btn { background: var(--priority-high); color: #fff; }
+.bulk-action-bar .bulk-cancel-btn { background: none; color: var(--paper); opacity: 0.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="habits-wrap app{% if user_settings.compact_mode %} is-compact{% endif %}">
+  <div class="habits-header">
+    <h1>{% include "icons.html" with icon="repeat" size=20 %} Habits</h1>
+    <div class="habits-header-actions">
+      <form method="post" action="{% url 'toggle_compact_mode' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--ghost" title="Toggle compact mode">
+          {% include "icons.html" with icon="sliders" size=14 %}
+          {% if user_settings.compact_mode %}Comfortable{% else %}Compact{% endif %}
+        </button>
+      </form>
+      <button type="button" class="btn btn--ghost" id="selectModeBtn">{% include "icons.html" with icon="check-square" size=14 %} Select</button>
+      <a href="{% url 'habit_create' %}" class="btn btn--primary">{% include "icons.html" with icon="plus" size=14 %} New habit</a>
+    </div>
+  </div>
+
+  {% for section_key, section in sections.items %}
+  <div class="habit-section" data-section="{{ section_key }}">
+    <div class="habit-section-title">
+      {{ section.label }} <span class="count">({{ section.habits|length }})</span>
+    </div>
+
+    <div class="habit-cards" data-section="{{ section_key }}">
+    {% for item in section.habits %}
+    <div class="habit-card{% if item.habit.paused %} is-paused{% endif %}" data-habit-id="{{ item.habit.id }}">
+      <div class="habit-card-top">
+
+        <span class="habit-drag-handle" title="Drag to reorder">{% include "icons.html" with icon="grip-vertical" size=15 %}</span>
+        <input type="checkbox" class="select-checkbox" data-habit-id="{{ item.habit.id }}">
+
+        {% if item.habit.habit_type == 'yes_no' %}
+        <button class="habit-yesno-toggle{% if item.entry.completed %} is-completed{% endif %}"
+                data-habit-id="{{ item.habit.id }}" data-action="toggle-yesno"
+                {% if item.habit.paused %}disabled{% endif %}
+                title="Mark complete">{% include "icons.html" with icon="check-square" size=15 %}</button>
+        {% endif %}
+
+        <div class="habit-card-main">
+          <div class="habit-card-title-row">
+            <span class="habit-card-title">{{ item.habit.text }}</span>
+            {% if item.habit.habit_type == 'numeric' %}<span class="habit-meta-badge">{% include "icons.html" with icon="hash" size=10 %} Numeric</span>{% endif %}
+            {% if item.habit.habit_type == 'checklist' %}<span class="habit-meta-badge">{% include "icons.html" with icon="list-checks" size=10 %} Checklist</span>{% endif %}
+          </div>
+          <div class="habit-meta-row">
+            {% if item.habit.is_scheduled %}
+            <span class="habit-meta-badge">{% include "icons.html" with icon="clock" size=10 %} {{ item.habit.scheduled_time|time:"g:i A" }}</span>
+            {% else %}
+            <span class="habit-meta-badge">Anytime</span>
+            {% endif %}
+            {% if item.habit.duration_minutes %}
+            <span class="habit-meta-badge">{{ item.habit.duration_minutes }} min</span>
+            {% endif %}
+            <span class="habit-meta-badge habit-streak-badge{% if item.streak == 0 %} is-zero{% endif %}">
+              {% include "icons.html" with icon="flame" size=10 %} {{ item.streak }}
+            </span>
+            {% if item.habit.paused %}
+            <span class="habit-meta-badge habit-paused-badge">{% include "icons.html" with icon="pause" size=10 %} Paused</span>
+            {% endif %}
+            {% if not item.habit.paused and item.grace_remaining > 0 and not item.entry.completed %}
+            <button class="grace-day-btn" data-habit-id="{{ item.habit.id }}" data-action="grace-day"
+                    title="Use a grace day to protect your streak without marking complete">
+              {% include "icons.html" with icon="shield" size=10 %} Grace day ({{ item.grace_remaining }} left)
+            </button>
+            {% endif %}
+          </div>
+
+          {% if item.habit.habit_type == 'numeric' and not item.habit.paused %}
+          <div class="habit-numeric-row" style="margin-top:8px;">
+            <input type="number" step="any" class="habit-numeric-input" data-habit-id="{{ item.habit.id }}"
+                   value="{% if item.entry.numeric_value %}{{ item.entry.numeric_value }}{% endif %}"
+                   placeholder="0">
+            <span class="habit-numeric-target">/ {{ item.habit.target_value|floatformat:"-2" }} {{ item.habit.target_unit }}</span>
+            <div class="habit-numeric-bar-track">
+              <div class="habit-numeric-bar-fill" style="width:{% widthratio item.entry.numeric_value|default:0 item.habit.target_value 100 %}%;"></div>
+            </div>
+            <button class="btn btn--ghost habit-numeric-log-btn" data-habit-id="{{ item.habit.id }}">Log</button>
+          </div>
+          {% endif %}
+
+          {% if item.habit.habit_type == 'checklist' %}
+          <div class="habit-checklist">
+            {% for ci in item.checklist_items %}
+            <label class="habit-checklist-item{% if ci.id|stringformat:'s' in item.checked_ids %} is-checked{% endif %}"
+                   data-checklist-item-row data-item-id="{{ ci.id }}">
+              <input type="checkbox" class="subtask-check" data-habit-id="{{ item.habit.id }}" data-item-id="{{ ci.id }}"
+                     {% if item.habit.paused %}disabled{% endif %}>
+              <span class="checklist-item-text">{{ ci.text }}</span>
+            </label>
+            {% endfor %}
+            <span class="habit-checklist-progress">{{ item.checklist_progress }} done</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="habit-actions">
+          <a href="{% url 'habit_stats_detail' item.habit.id %}" class="icon-btn" title="View stats">{% include "icons.html" with icon="trending-up" size=14 %}</a>
+<a href="{% url 'habit_edit' item.habit.id %}" class="icon-btn" title="Edit habit">{% include "icons.html" with icon="edit" size=14 %}</a>
+          <form method="post" action="{% url 'habit_pause_toggle' item.habit.id %}">
+            {% csrf_token %}
+            <button type="submit" class="icon-btn" title="{% if item.habit.paused %}Resume{% else %}Pause{% endif %}">
+              {% include "icons.html" with icon=item.habit.paused|yesno:"play,pause" size=14 %}
+            </button>
+          </form>
+          <form method="post" action="{% url 'habit_archive_toggle' item.habit.id %}">
+            {% csrf_token %}
+            <button type="submit" class="icon-btn" title="Archive">{% include "icons.html" with icon="archive" size=14 %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p class="empty-state">No habits in this section yet.</p>
+    {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if archived_habits %}
+  <button class="archived-toggle" id="archivedToggle">
+    {% include "icons.html" with icon="archive" size=13 %} {{ archived_habits|length }} archived habit{{ archived_habits|length|pluralize }} — show
+  </button>
+  <div class="archived-list hidden" id="archivedList">
+    {% for h in archived_habits %}
+    <div class="habit-card" style="opacity:0.6;">
+      <div class="habit-card-top">
+        <div class="habit-card-main">
+          <span class="habit-card-title">{{ h.text }}</span>
+        </div>
+        <div class="habit-actions">
+          <form method="post" action="{% url 'habit_archive_toggle' h.id %}">
+            {% csrf_token %}
+            <button type="submit" class="icon-btn" title="Unarchive">{% include "icons.html" with icon="archive" size=14 %}</button>
+          </form>
+          <form method="post" action="{% url 'habit_delete' h.id %}" onsubmit="return confirm('Delete this habit permanently? This also deletes its history.');">
+            {% csrf_token %}
+            <button type="submit" class="icon-btn icon-btn--danger" title="Delete permanently">{% include "icons.html" with icon="trash" size=14 %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="bulk-action-bar hidden" id="bulkActionBar">
+    <span id="bulkSelectedCount">0 selected</span>
+    <select id="bulkMoveSection">
+      {% for key, label in sections.items %}
+      <option value="{{ key }}">Move to {{ label.label }}</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="bulk-move-btn" id="bulkMoveBtn">{% include "icons.html" with icon="corner-down-right" size=13 %} Move</button>
+    <button type="button" class="bulk-archive-btn" id="bulkArchiveBtn">{% include "icons.html" with icon="archive" size=13 %} Archive</button>
+    <button type="button" class="bulk-delete-btn" id="bulkDeleteBtn">{% include "icons.html" with icon="trash" size=13 %} Delete</button>
+    <button type="button" class="bulk-cancel-btn" id="bulkCancelBtn">Cancel</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+const CSRF_TOKEN = "{{ csrf_token }}";
+const HABIT_URLS = {
+  toggleYesNo:      "/habits/api/__ID__/toggle-yesno/",
+  logNumeric:       "/habits/api/__ID__/log-numeric/",
+  checklistToggle:  "/habits/api/__ID__/checklist-toggle/",
+  graceDay:         "/habits/api/__ID__/grace-day/",
+  reorder:          "{% url 'habit_reorder' %}",
+  bulkAction:       "{% url 'habit_bulk_action' %}",
+};
+</script>
+<script src="{% static 'js/habits.js' %}"></script>
+{% endblock %}

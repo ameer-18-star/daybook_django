@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-accent="{{ global_user_settings.accent_color|default:'teal' }}" data-card-theme="{{ global_user_settings.card_theme|default:'classic' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Daybook{% endblock %} — Daily Task Manager</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_css %}{% endblock %}
+<script>
+  /* Apply saved theme before paint to avoid a flash of the wrong theme. */
+  (function () {
+    var saved = localStorage.getItem('daybook-theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+</head>
+<body class="site-body">
+
+{% if request.user.is_authenticated %}
+<button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+  {% include "icons.html" with icon="columns" size=18 %}
+</button>
+<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+{% endif %}
+
+<div class="app-shell">
+
+  {% if request.user.is_authenticated %}
+  {% with active=request.resolver_match.url_name %}
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">◐</span>
+      <span class="sidebar-brand-text">Daybook</span>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <div class="sidebar-group">
+        <a href="{% url 'index' %}" class="sidebar-link{% if active == 'index' %} is-active{% endif %}">
+          {% include "icons.html" with icon="check-square" size=16 %} <span>Tasks</span>
+        </a>
+        <a href="{% url 'recurring_tasks' %}" class="sidebar-link{% if active == 'recurring_tasks' %} is-active{% endif %}">
+          {% include "icons.html" with icon="clock" size=16 %} <span>Recurring Tasks</span>
+        </a>
+        <a href="{% url 'weekly_planner' %}" class="sidebar-link{% if active == 'weekly_planner' %} is-active{% endif %}">
+          {% include "icons.html" with icon="calendar" size=16 %} <span>Weekly Planner</span>
+        </a>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Habits</div>
+        <a href="{% url 'habit_list' %}" class="sidebar-link{% if active == 'habit_list' %} is-active{% endif %}">
+          {% include "icons.html" with icon="repeat" size=16 %} <span>Habits</span>
+        </a>
+        <a href="{% url 'habit_timeline' %}" class="sidebar-link{% if active == 'habit_timeline' %} is-active{% endif %}">
+          {% include "icons.html" with icon="columns" size=16 %} <span>Timeline</span>
+        </a>
+        <a href="{% url 'stats_overview' %}" class="sidebar-link{% if active == 'stats_overview' %} is-active{% endif %}">
+          {% include "icons.html" with icon="chart-bar" size=16 %} <span>Stats</span>
+        </a>
+        <a href="{% url 'yearly_calendar' %}" class="sidebar-link{% if active == 'yearly_calendar' %} is-active{% endif %}">
+          {% include "icons.html" with icon="calendar" size=16 %} <span>Calendar</span>
+        </a>
+        <a href="{% url 'journal_list' %}" class="sidebar-link{% if active == 'journal_list' %} is-active{% endif %}">
+          {% include "icons.html" with icon="book-open" size=16 %} <span>Journal</span>
+        </a>
+        <a href="{% url 'weekly_review' %}" class="sidebar-link{% if active == 'weekly_review' %} is-active{% endif %}">
+          {% include "icons.html" with icon="award" size=16 %} <span>Review</span>
+        </a>
+        <a href="{% url 'badges_page' %}" class="sidebar-link{% if active == 'badges_page' %} is-active{% endif %}">
+          {% include "icons.html" with icon="shield" size=16 %} <span>Badges</span>
+        </a>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Reports</div>
+        <a href="{% url 'weekly_report' %}" class="sidebar-link{% if active == 'weekly_report' %} is-active{% endif %}">
+          {% include "icons.html" with icon="chart-bar" size=16 %} <span>Weekly</span>
+        </a>
+        <a href="{% url 'monthly_report' %}" class="sidebar-link{% if active == 'monthly_report' %} is-active{% endif %}">
+          {% include "icons.html" with icon="calendar" size=16 %} <span>Monthly</span>
+        </a>
+        <a href="{% url 'custom_report' %}" class="sidebar-link{% if active == 'custom_report' %} is-active{% endif %}">
+          {% include "icons.html" with icon="sliders" size=16 %} <span>Custom range</span>
+        </a>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Data</div>
+        <a href="{% url 'export_json' %}" class="sidebar-link" title="Downloads today's tasks as JSON">
+          {% include "icons.html" with icon="folder" size=16 %} <span>Export today (JSON)</span>
+        </a>
+        <a href="{% url 'export_txt' %}" class="sidebar-link" title="Downloads today's tasks as a text summary">
+          {% include "icons.html" with icon="file-text" size=16 %} <span>Export today (TXT)</span>
+        </a>
+        <label class="sidebar-link sidebar-link--action" title="Restore a day of tasks from a previously exported JSON file">
+          {% include "icons.html" with icon="upload" size=16 %} <span>Import tasks (JSON)</span>
+          <input type="file" id="sidebarImportInput" accept="application/json,.json" hidden>
+        </label>
+        <a href="{% url 'backup_restore' %}" class="sidebar-link{% if active == 'backup_restore' %} is-active{% endif %}">
+          {% include "icons.html" with icon="download" size=16 %} <span>Full backup &amp; restore</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{% url 'profile' %}" class="sidebar-link{% if active == 'profile' %} is-active{% endif %}">
+        {% if global_user_settings.avatar %}<img src="{{ global_user_settings.avatar.url }}" class="nav-avatar" alt="">{% else %}{% include "icons.html" with icon="user" size=16 %}{% endif %}
+        <span>{{ request.user.username }}</span>
+      </a>
+      <a href="{% url 'logout' %}" class="sidebar-link sidebar-link--muted">
+        {% include "icons.html" with icon="log-out" size=16 %} <span>Sign out</span>
+      </a>
+    </div>
+  </aside>
+  {% endwith %}
+  {% endif %}
+
+  <div class="site-content">
+    {% if messages %}
+    <div class="global-messages">
+      {% for message in messages %}
+      <div class="global-message global-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="app site-main">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="site-footer-brand">
+      <span class="brand-mark">◐</span> Daybook
+    </div>
+    <nav class="site-footer-links">
+      {% if not request.user.is_authenticated %}
+      <a href="{% url 'login' %}">Sign in</a>
+      <a href="{% url 'register' %}">Create account</a>
+      {% endif %}
+    </nav>
+    <div class="site-footer-copy">&copy; {% now "Y" %} Daybook &middot; a personal task &amp; habit tracker</div>
+  </div>
+</footer>
+
+<button id="themeToggleBtn" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+  <span class="theme-toggle-icon-dark">{% include "icons.html" with icon="moon" size=16 %}</span>
+  <span class="theme-toggle-icon-light">{% include "icons.html" with icon="sun" size=16 %}</span>
+</button>
+
+<script>
+  document.getElementById('themeToggleBtn').addEventListener('click', function () {
+    var root = document.documentElement;
+    var isDark = root.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      root.removeAttribute('data-theme');
+      localStorage.setItem('daybook-theme', 'light');
+    } else {
+      root.setAttribute('data-theme', 'dark');
+      localStorage.setItem('daybook-theme', 'dark');
+    }
+  });
+
+  // Auto-dismiss flash messages after a few seconds.
+  document.querySelectorAll('.global-message').forEach(function (el, i) {
+    setTimeout(function () { el.style.display = 'none'; }, 6000 + i * 300);
+  });
+
+  // Mobile sidebar: off-canvas toggle + backdrop + auto-close on link tap.
+  (function () {
+    var toggleBtn = document.getElementById('sidebarToggleBtn');
+    var sidebar = document.getElementById('sidebar');
+    var backdrop = document.getElementById('sidebarBackdrop');
+    if (!toggleBtn || !sidebar) return;
+
+    function closeSidebar() {
+      sidebar.classList.remove('is-open');
+      backdrop.classList.remove('is-visible');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+    function openSidebar() {
+      sidebar.classList.add('is-open');
+      backdrop.classList.add('is-visible');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    toggleBtn.addEventListener('click', function () {
+      if (sidebar.classList.contains('is-open')) closeSidebar(); else openSidebar();
+    });
+    backdrop.addEventListener('click', closeSidebar);
+    sidebar.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeSidebar);
+    });
+  })();
+
+  // Sidebar "Import tasks (JSON)" — self-contained here (not app.js, which
+  // only loads on the Tasks page) since the sidebar is global.
+  document.getElementById('sidebarImportInput')?.addEventListener('change', async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch("{% url 'import_json' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': "{{ csrf_token }}" },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      alert(`Imported ${data.tasks_created} task(s) for ${data.imported_date}. Redirecting…`);
+      window.location.href = data.redirect_url;
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+    e.target.value = '';
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

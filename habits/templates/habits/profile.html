@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.profile-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+
+.profile-avatar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.profile-avatar {
+  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--line-soft);
+  display: flex; align-items: center; justify-content: center; color: var(--ink-faint); flex-shrink: 0;
+}
+.profile-avatar-name { font-size: 16px; font-weight: 600; }
+.profile-avatar-meta { font-size: 12px; color: var(--ink-faint); }
+
+.profile-section { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.profile-section h2 { font-size: 14.5px; margin: 0 0 14px; font-family: var(--font-display); display: flex; align-items: center; gap: 8px; }
+.form-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.form-row > * { flex: 1; min-width: 140px; }
+.form-field { margin-bottom: 12px; }
+.form-field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 600; }
+.form-field input[type=text], .form-field input[type=email], .form-field input[type=password] {
+  width: 100%; font-size: 13.5px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink);
+}
+.field-errors { background: var(--priority-high-bg); color: var(--priority-high); border-radius: 8px; padding: 6px 10px; font-size: 12px; margin-top: 4px; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.checkbox-row label { font-size: 13px; margin: 0; }
+.backup-link-row { display: flex; align-items: center; justify-content: space-between; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrap">
+  <div class="profile-header">
+    <h1>{% include "icons.html" with icon="user" size=20 %} Profile</h1>
+  </div>
+
+  <div class="profile-avatar-row">
+    {% if user_settings.avatar %}
+    <img src="{{ user_settings.avatar.url }}" class="profile-avatar" alt="Avatar">
+    {% else %}
+    <div class="profile-avatar">{% include "icons.html" with icon="user" size=26 %}</div>
+    {% endif %}
+    <div>
+      <div class="profile-avatar-name">{{ request.user.username }}</div>
+      <div class="profile-avatar-meta">Member since {{ request.user.date_joined|date:"M Y" }}</div>
+    </div>
+  </div>
+
+  <!-- Account -->
+  <div class="profile-section">
+    <h2>{% include "icons.html" with icon="user" size=15 %} Account</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="profile">
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ profile_form.username.id_for_label }}">Username</label>
+          {{ profile_form.username }}
+          {% if profile_form.username.errors %}<div class="field-errors">{{ profile_form.username.errors }}</div>{% endif %}
+        </div>
+        <div class="form-field">
+          <label for="{{ profile_form.email.id_for_label }}">{% include "icons.html" with icon="mail" size=12 %} Email</label>
+          {{ profile_form.email }}
+          {% if profile_form.email.errors %}<div class="field-errors">{{ profile_form.email.errors }}</div>{% endif %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary">Save account details</button>
+    </form>
+  </div>
+
+  <!-- Password -->
+  <div class="profile-section">
+    <h2>{% include "icons.html" with icon="key" size=15 %} Password</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="password">
+      <div class="form-field">
+        <label for="{{ password_form.old_password.id_for_label }}">Current password</label>
+        {{ password_form.old_password }}
+        {% if password_form.old_password.errors %}<div class="field-errors">{{ password_form.old_password.errors }}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ password_form.new_password1.id_for_label }}">New password</label>
+          {{ password_form.new_password1 }}
+          {% if password_form.new_password1.errors %}<div class="field-errors">{{ password_form.new_password1.errors }}</div>{% endif %}
+        </div>
+        <div class="form-field">
+          <label for="{{ password_form.new_password2.id_for_label }}">Confirm new password</label>
+          {{ password_form.new_password2 }}
+          {% if password_form.new_password2.errors %}<div class="field-errors">{{ password_form.new_password2.errors }}</div>{% endif %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn--primary">Change password</button>
+    </form>
+  </div>
+
+  <!-- Preferences -->
+  <div class="profile-section">
+    <h2>{% include "icons.html" with icon="sliders" size=15 %} Preferences</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="settings">
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ settings_form.accent_color.id_for_label }}">Accent color</label>
+          {{ settings_form.accent_color }}
+        </div>
+        <div class="form-field">
+          <label for="{{ settings_form.card_theme.id_for_label }}">Card theme</label>
+          {{ settings_form.card_theme }}
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        {{ settings_form.compact_mode }}
+        <label for="{{ settings_form.compact_mode.id_for_label }}">Compact mode on the Habits page</label>
+      </div>
+
+      <div class="form-field">
+        <label for="{{ settings_form.avatar.id_for_label }}">Avatar</label>
+        {{ settings_form.avatar }}
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ settings_form.timeline_start_hour.id_for_label }}">Timeline day starts</label>
+          {{ settings_form.timeline_start_hour }}
+        </div>
+        <div class="form-field">
+          <label for="{{ settings_form.timeline_end_hour.id_for_label }}">Timeline day ends</label>
+          {{ settings_form.timeline_end_hour }}
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        {{ settings_form.daily_report_enabled }}
+        <label for="{{ settings_form.daily_report_enabled.id_for_label }}">Email me a daily report</label>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="{{ settings_form.daily_report_time.id_for_label }}">Send at</label>
+          {{ settings_form.daily_report_time }}
+        </div>
+        <div class="form-field">
+          <label for="{{ settings_form.daily_report_email.id_for_label }}">Send to</label>
+          {{ settings_form.daily_report_email }}
+        </div>
+      </div>
+      <p class="tools-hint" style="margin:-4px 0 12px;">
+        Daily report delivery isn't wired up to an email backend yet — this saves your preference for when it is.
+      </p>
+
+      <button type="submit" class="btn btn--primary">Save preferences</button>
+    </form>
+  </div>
+
+  <!-- Backup -->
+  <div class="profile-section">
+    <div class="backup-link-row">
+      <div>
+        <h2 style="margin-bottom:4px;">{% include "icons.html" with icon="download" size=15 %} Backup &amp; Restore</h2>
+        <p class="tools-hint" style="margin:0;">Download or restore your full habit history.</p>
+      </div>
+      <a href="{% url 'backup_restore' %}" class="btn btn--ghost">Open</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

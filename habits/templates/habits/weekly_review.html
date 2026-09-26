@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Weekly Review{% endblock %}
+
+{% block extra_css %}
+<style>
+.review-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.review-header { margin-bottom: 18px; }
+.review-header h1 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.review-header .sub { font-size: 12.5px; color: var(--ink-faint); }
+
+.review-progress { display: flex; gap: 4px; margin-bottom: 20px; }
+.review-progress-seg { flex: 1; height: 5px; border-radius: 999px; background: var(--line); }
+.review-progress-seg.is-done { background: var(--accent); }
+.review-progress-seg.is-current { background: var(--priority-med); }
+
+.review-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+.review-habit-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; text-align: center; }
+.review-habit-meta { font-size: 12px; color: var(--ink-faint); text-align: center; margin-bottom: 20px; }
+
+.effort-picker { display: flex; justify-content: center; gap: 8px; margin-bottom: 18px; }
+.effort-option { display: none; }
+.effort-option-label {
+  width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--line); background: var(--paper);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--font-mono);
+  cursor: pointer; color: var(--ink-soft);
+}
+.effort-option:checked + .effort-option-label { background: var(--accent); border-color: var(--accent); color: #fff; }
+.effort-scale-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--ink-faint); margin: 0 2px 18px; }
+
+.review-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-wrap">
+  <div class="review-header">
+    <h1>{% include "icons.html" with icon="award" size=20 %} Weekly Review</h1>
+    <div class="sub">Week of {{ week_start|date:"M j" }} – {{ week_end|date:"M j, Y" }}</div>
+  </div>
+
+  {% if no_habits %}
+  <p class="empty-state">You don't have any active habits to review yet — add one first.</p>
+  <a href="{% url 'habit_create' %}" class="btn btn--primary">{% include "icons.html" with icon="plus" size=14 %} New habit</a>
+  {% else %}
+
+  <div class="review-progress">
+    {% for i in step_range %}
+    <div class="review-progress-seg{% if forloop.counter0 < step %} is-done{% elif forloop.counter0 == step %} is-current{% endif %}"></div>
+    {% endfor %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="habit_id" value="{{ current_habit.id }}">
+    <input type="hidden" name="step" value="{{ step }}">
+
+    <div class="review-card">
+      <div class="review-habit-name">{{ current_habit.text }}</div>
+      <div class="review-habit-meta">{{ current_habit.get_section_display }} &middot; step {{ step|add:1 }} of {{ total_steps }}</div>
+
+      <div class="effort-picker">
+        {% for i in "12345" %}
+        <input type="radio" name="effort_rating" value="{{ i }}" id="effort{{ i }}" class="effort-option"
+               {% if existing_rating.effort_rating|stringformat:"s" == i %}checked{% endif %} required>
+        <label for="effort{{ i }}" class="effort-option-label">{{ i }}</label>
+        {% endfor %}
+      </div>
+      <div class="effort-scale-labels"><span>Low effort</span><span>High effort</span></div>
+
+      <textarea name="note" class="notes-textarea" placeholder="Any reflection on this habit this week? (optional)">{% if existing_rating %}{{ existing_rating.note }}{% endif %}</textarea>
+
+      <div class="review-actions">
+        {% if step > 0 %}
+        <a href="?step={{ step|add:"-1" }}" class="btn btn--ghost">{% include "icons.html" with icon="chevron-left" size=14 %} Back</a>
+        {% else %}
+        <span></span>
+        {% endif %}
+        <button type="submit" class="btn btn--primary">
+          {% if is_last_step %}Finish review{% else %}Next {% include "icons.html" with icon="chevron-right" size=14 %}{% endif %}
+        </button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

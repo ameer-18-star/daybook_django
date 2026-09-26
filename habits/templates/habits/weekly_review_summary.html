@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Weekly Review Summary{% endblock %}
+
+{% block extra_css %}
+<style>
+.review-summary-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.review-summary-header { margin-bottom: 18px; text-align: center; }
+.review-summary-header h1 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.review-summary-header .sub { font-size: 12.5px; color: var(--ink-faint); }
+
+.rating-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line-soft);
+}
+.rating-row:last-child { border-bottom: none; }
+.rating-habit { flex: 1; }
+.rating-habit-name { font-size: 13.5px; font-weight: 600; }
+.rating-habit-note { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+.rating-score {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-strong);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: var(--font-mono); flex-shrink: 0;
+}
+.summary-actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-summary-wrap">
+  <div class="review-summary-header">
+    <h1>{% include "icons.html" with icon="circle-check" size=20 %} Review Complete</h1>
+    <div class="sub">Week of {{ week_start|date:"M j" }} – {{ week_end|date:"M j, Y" }}</div>
+  </div>
+
+  <div class="stats-section" style="background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:16px;">
+    {% for rating in ratings %}
+    <div class="rating-row">
+      <span class="rating-score">{{ rating.effort_rating }}</span>
+      <div class="rating-habit">
+        <div class="rating-habit-name">{{ rating.habit.text }}</div>
+        {% if rating.note %}<div class="rating-habit-note">{{ rating.note }}</div>{% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <p class="empty-state">No ratings recorded.</p>
+    {% endfor %}
+  </div>
+
+  <div class="summary-actions">
+    <form method="post" action="{% url 'weekly_review_restart' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--primary">{% include "icons.html" with icon="repeat" size=14 %} Redo this week</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

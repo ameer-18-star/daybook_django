@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ the_date|date:"M j, Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.day-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.day-header h1 { font-family: var(--font-display); font-size: 20px; margin: 0; }
+.day-nav { display: flex; align-items: center; gap: 6px; }
+.day-nav a {
+  display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border-radius: 999px; color: var(--ink-soft); text-decoration: none;
+}
+.day-nav a:hover { background: var(--accent-soft); color: var(--accent-strong); }
+
+.day-section { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+.day-section h2 { font-size: 14px; margin: 0 0 10px; font-family: var(--font-display); display: flex; align-items: center; gap: 8px; }
+.day-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line-soft); font-size: 13px; }
+.day-item:last-child { border-bottom: none; }
+.day-item .status-icon { flex-shrink: 0; display: flex; color: var(--ink-faint); }
+.day-item.is-done .status-icon { color: var(--accent); }
+.day-item-text { flex: 1; }
+.day-item-text.is-done { text-decoration: line-through; color: var(--ink-faint); }
+.day-item-meta { font-size: 11px; color: var(--ink-faint); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="day-wrap">
+  <div class="day-header">
+    <h1>{{ the_date|date:"l, F j, Y" }}{% if the_date == today %} &middot; Today{% endif %}</h1>
+    <div class="day-nav">
+      <a href="{% url 'day_detail' prev_date.year prev_date.month prev_date.day %}" title="Previous day">{% include "icons.html" with icon="chevron-left" size=16 %}</a>
+      <a href="{% url 'yearly_calendar' %}" title="Back to calendar">{% include "icons.html" with icon="calendar" size=16 %}</a>
+      <a href="{% url 'day_detail' next_date.year next_date.month next_date.day %}" title="Next day">{% include "icons.html" with icon="chevron-right" size=16 %}</a>
+    </div>
+  </div>
+
+  <div class="day-section">
+    <h2>{% include "icons.html" with icon="repeat" size=15 %} Habits</h2>
+    {% for entry in habit_entries %}
+    <div class="day-item{% if entry.completed %} is-done{% endif %}">
+      <span class="status-icon">{% include "icons.html" with icon="check-square" size=14 %}</span>
+      <span class="day-item-text{% if entry.completed %} is-done{% endif %}">{{ entry.habit.text }}</span>
+      <span class="day-item-meta">
+        {% if entry.habit.habit_type == 'numeric' %}{{ entry.numeric_value|default:"—" }}/{{ entry.habit.target_value }} {{ entry.habit.target_unit }}
+        {% elif entry.used_grace_day %}grace day
+        {% endif %}
+      </span>
+    </div>
+    {% empty %}
+    <p class="empty-state">No habit activity logged this day.</p>
+    {% endfor %}
+  </div>
+
+  <div class="day-section">
+    <h2>{% include "icons.html" with icon="check-square" size=15 %} Tasks</h2>
+    {% for task in tasks_for_day %}
+    <div class="day-item{% if task.completed %} is-done{% endif %}">
+      <span class="status-icon">{% include "icons.html" with icon="check-square" size=14 %}</span>
+      <span class="day-item-text{% if task.completed %} is-done{% endif %}">{{ task.text }}</span>
+      <span class="day-item-meta">{{ task.category }} / {{ task.priority }}</span>
+    </div>
+    {% empty %}
+    <p class="empty-state">No tasks logged this day.</p>
+    {% endfor %}
+  </div>
+
+  <div class="day-section">
+    <h2>{% include "icons.html" with icon="book-open" size=15 %} Journal</h2>
+    {% if journal_entry_for_day %}
+    <p style="font-size:13px; white-space:pre-wrap; margin:0 0 10px;">{{ journal_entry_for_day.text|truncatewords:60 }}</p>
+    {% else %}
+    <p class="empty-state">No journal entry this day.</p>
+    {% endif %}
+    <a href="{% url 'journal_entry' the_date.year the_date.month the_date.day %}" class="btn btn--ghost">
+      {% include "icons.html" with icon="edit" size=14 %} {% if journal_entry_for_day %}Edit entry{% else %}Write entry{% endif %}
+    </a>
+  </div>
+</div>
+{% endblock %}

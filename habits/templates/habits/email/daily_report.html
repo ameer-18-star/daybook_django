@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daybook Daily Summary</title>
+</head>
+<body style="margin:0; padding:0; background:#F5F6F1; font-family:Arial, Helvetica, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F6F1; padding:24px 0;">
+<tr><td align="center">
+<table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#FFFFFF; border-radius:12px;">
+
+  <tr><td style="padding:24px 28px 8px;">
+    <h1 style="margin:0; font-size:20px; color:#1B2420; font-family:Georgia, serif;">Daybook — Daily Summary</h1>
+    <p style="margin:4px 0 0; font-size:13px; color:#8A9289;">{{ date|date:"l, F j, Y" }}</p>
+  </td></tr>
+
+  <tr><td style="padding:16px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="48%" style="padding:14px; background:#F5F6F1; border-radius:10px;" align="center">
+          <div style="font-size:22px; font-weight:bold; color:#2F6F62;">{{ completed_tasks }}/{{ total_tasks }}</div>
+          <div style="font-size:11px; color:#8A9289; text-transform:uppercase; letter-spacing:0.04em;">Tasks &middot; {{ task_pct }}%</div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <td width="48%" style="padding:14px; background:#F5F6F1; border-radius:10px;" align="center">
+          <div style="font-size:22px; font-weight:bold; color:#2F6F62;">{{ completed_habits }}/{{ total_habits }}</div>
+          <div style="font-size:11px; color:#8A9289; text-transform:uppercase; letter-spacing:0.04em;">Habits &middot; {{ habit_pct }}%</div>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  {% if tasks %}
+  <tr><td style="padding:8px 28px;">
+    <h2 style="font-size:12px; color:#4B5750; text-transform:uppercase; letter-spacing:0.06em; margin:12px 0 8px;">Tasks</h2>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      {% for task in tasks %}
+      <tr>
+        <td style="padding:5px 0; font-size:13px; border-bottom:1px solid #EAECE5;
+                    color:{% if task.completed %}#8A9289{% else %}#1B2420{% endif %};
+                    {% if task.completed %}text-decoration:line-through;{% endif %}">
+          {{ task.text }}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </td></tr>
+  {% endif %}
+
+  {% if habit_entries %}
+  <tr><td style="padding:8px 28px 20px;">
+    <h2 style="font-size:12px; color:#4B5750; text-transform:uppercase; letter-spacing:0.06em; margin:12px 0 8px;">Habits</h2>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      {% for entry in habit_entries %}
+      <tr>
+        <td style="padding:5px 0; font-size:13px; border-bottom:1px solid #EAECE5;
+                    color:{% if entry.completed %}#8A9289{% else %}#1B2420{% endif %};
+                    {% if entry.completed %}text-decoration:line-through;{% endif %}">
+          {{ entry.habit.text }}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </td></tr>
+  {% endif %}
+
+  {% if not tasks and not habit_entries %}
+  <tr><td style="padding:8px 28px 20px;">
+    <p style="font-size:13px; color:#8A9289; font-style:italic;">Nothing logged for this day yet.</p>
+  </td></tr>
+  {% endif %}
+
+  <tr><td style="padding:16px 28px; border-top:1px solid #DEE1D8;">
+    <p style="margin:0; font-size:11px; color:#8A9289;">
+      Sent by Daybook. Manage this under Profile &rarr; Preferences.
+    </p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

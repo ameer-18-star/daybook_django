@@ -1,0 +1,69 @@
+{% comment %}
+Compact habit card — same classes/data-attributes as the full card on
+the Habits page (habits/list.html) so the existing habits.js handlers
+(toggle, numeric log, checklist, grace day) work here with zero new JS.
+{% endcomment %}
+<div class="habit-card{% if item.habit.paused %} is-paused{% endif %}" data-habit-id="{{ item.habit.id }}">
+  <div class="habit-card-top">
+
+    {% if item.habit.habit_type == 'yes_no' %}
+    <button class="habit-yesno-toggle{% if item.entry.completed %} is-completed{% endif %}"
+            data-habit-id="{{ item.habit.id }}" data-action="toggle-yesno"
+            {% if item.habit.paused %}disabled{% endif %}
+            title="Mark complete">{% include "icons.html" with icon="check-square" size=15 %}</button>
+    {% endif %}
+
+    <div class="habit-card-main">
+      <div class="habit-card-title-row">
+        <span class="habit-card-title">{{ item.habit.text }}</span>
+        {% if item.habit.habit_type == 'numeric' %}<span class="habit-meta-badge">{% include "icons.html" with icon="hash" size=10 %} Numeric</span>{% endif %}
+        {% if item.habit.habit_type == 'checklist' %}<span class="habit-meta-badge">{% include "icons.html" with icon="list-checks" size=10 %} Checklist</span>{% endif %}
+      </div>
+      <div class="habit-meta-row">
+        {% if item.habit.is_scheduled %}
+        <span class="habit-meta-badge">{% include "icons.html" with icon="clock" size=10 %} {{ item.habit.scheduled_time|time:"g:i A" }}</span>
+        {% else %}
+        <span class="habit-meta-badge">Anytime</span>
+        {% endif %}
+        <span class="habit-meta-badge habit-streak-badge{% if item.streak == 0 %} is-zero{% endif %}">
+          {% include "icons.html" with icon="flame" size=10 %} {{ item.streak }}
+        </span>
+        {% if item.habit.paused %}
+        <span class="habit-meta-badge habit-paused-badge">{% include "icons.html" with icon="pause" size=10 %} Paused</span>
+        {% endif %}
+        {% if not item.habit.paused and item.grace_remaining > 0 and not item.entry.completed %}
+        <button class="grace-day-btn" data-habit-id="{{ item.habit.id }}" data-action="grace-day"
+                title="Use a grace day to protect your streak without marking complete">
+          {% include "icons.html" with icon="shield" size=10 %} Grace day ({{ item.grace_remaining }} left)
+        </button>
+        {% endif %}
+      </div>
+
+      {% if item.habit.habit_type == 'numeric' and not item.habit.paused %}
+      <div class="habit-numeric-row" style="margin-top:8px;">
+        <input type="number" step="any" class="habit-numeric-input" data-habit-id="{{ item.habit.id }}"
+               value="{% if item.entry.numeric_value %}{{ item.entry.numeric_value }}{% endif %}"
+               placeholder="0">
+        <span class="habit-numeric-target">/ {{ item.habit.target_value|floatformat:"-2" }} {{ item.habit.target_unit }}</span>
+        <div class="habit-numeric-bar-track">
+          <div class="habit-numeric-bar-fill" style="width:{% widthratio item.entry.numeric_value|default:0 item.habit.target_value 100 %}%;"></div>
+        </div>
+        <button class="btn btn--ghost habit-numeric-log-btn" data-habit-id="{{ item.habit.id }}">Log</button>
+      </div>
+      {% endif %}
+
+      {% if item.habit.habit_type == 'checklist' %}
+      <div class="habit-checklist">
+        {% for ci in item.checklist_items %}
+        <label class="habit-checklist-item{% if ci.id|stringformat:'s' in item.checked_ids %} is-checked{% endif %}">
+          <input type="checkbox" class="subtask-check" data-habit-id="{{ item.habit.id }}" data-item-id="{{ ci.id }}"
+                 {% if item.habit.paused %}disabled{% endif %}>
+          <span class="checklist-item-text">{{ ci.text }}</span>
+        </label>
+        {% endfor %}
+        <span class="habit-checklist-progress">{{ item.checklist_progress }} done</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

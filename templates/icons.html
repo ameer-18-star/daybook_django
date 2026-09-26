@@ -1,0 +1,143 @@
+{% comment %}
+Inline SVG icon library — stroke-based, inherits currentColor.
+Usage: {% include "icons.html" with icon="flame" size=16 %}
+{% endcomment %}
+{% if icon == "flame" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-flame"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+
+{% elif icon == "chart-bar" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-chart-bar"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
+
+{% elif icon == "calendar" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+
+{% elif icon == "camera" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-camera"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+
+{% elif icon == "file-text" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+
+{% elif icon == "folder" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+
+{% elif icon == "upload" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-upload"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+
+{% elif icon == "edit" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-edit"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+
+{% elif icon == "trash" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-trash"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+
+{% elif icon == "arrow-left" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-arrow-left"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+
+{% elif icon == "trending-up" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-trending-up"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+
+{% elif icon == "trending-down" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-trending-down"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+
+{% elif icon == "target" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-target"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+
+{% elif icon == "award" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-award"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+
+{% elif icon == "chevron-left" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+
+{% elif icon == "chevron-right" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+
+{% elif icon == "circle-check" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-circle-check"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+
+{% elif icon == "circle-alert" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-circle-alert"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+
+{% elif icon == "layers" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-layers"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65M22 12.65l-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+
+{% elif icon == "circle" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-circle"><circle cx="12" cy="12" r="10"/></svg>
+
+{% elif icon == "sun" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+
+{% elif icon == "moon" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+
+{% elif icon == "search" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+
+{% elif icon == "tag" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tag"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+
+{% elif icon == "plus" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-plus"><path d="M5 12h14M12 5v14"/></svg>
+
+{% elif icon == "repeat" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-repeat"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+
+{% elif icon == "download" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+
+{% elif icon == "user" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+
+{% elif icon == "log-out" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+
+{% elif icon == "clock" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+
+{% elif icon == "x" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-x"><path d="M18 6 6 18M6 6l12 12"/></svg>
+
+{% elif icon == "corner-down-right" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-corner-down-right"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+
+{% elif icon == "check-square" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-check-square"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+
+{% elif icon == "hash" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-hash"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>
+
+{% elif icon == "list-checks" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-list-checks"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>
+
+{% elif icon == "pause" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-pause"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+
+{% elif icon == "play" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-play"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+
+{% elif icon == "archive" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-archive"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></svg>
+
+{% elif icon == "sliders" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sliders"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/></svg>
+
+{% elif icon == "shield" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-shield"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+
+{% elif icon == "grip-vertical" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-grip-vertical"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+
+{% elif icon == "columns" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-columns"><path d="M3 3v18M12 3v18M21 3v18"/></svg>
+
+{% elif icon == "book-open" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-book-open"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+
+{% elif icon == "lock" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-lock"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+
+{% elif icon == "mail" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+
+{% elif icon == "key" %}
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ size|default:16 }}" height="{{ size|default:16 }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-key"><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3M12.5 15.8a4 4 0 1 1-5.6-5.6 4 4 0 0 1 5.6 5.6z"/></svg>
+
+{% endif %}
