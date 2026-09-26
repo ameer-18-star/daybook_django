@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Daybook{% endblock %}
+
+{% block content %}
+<!-- ===== Header ===== -->
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-mark">◐</span>
+    <div>
+      <h1>Daybook</h1>
+      <p class="tagline">one page, one day, one list</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="streak-pill" title="Consecutive days with a completed task">
+      <span class="streak-flame">{% include "icons.html" with icon="flame" size=14 %}</span>
+      <span id="streakCount">{{ streak }}</span>
+      <span class="streak-label">day streak</span>
+    </div>
+    <time class="today-date">{{ today|date:"l, F j, Y" }}</time>
+  </div>
+</header>
+
+{% if not is_today %}
+<div class="import-banner" id="importBanner">
+  <span>Viewing log for <strong>{{ view_date|date:"l, F j, Y" }}</strong> — read-only</span>
+  <a href="{% url 'index' %}" class="link-btn">
+    {% include "icons.html" with icon="arrow-left" size=12 %} Return to today
+  </a>
+</div>
+{% endif %}
+
+<!-- ===== Main grid ===== -->
+<main class="layout" id="captureArea">
+
+  <!-- Dashboard column -->
+  <section class="dashboard card" aria-label="Daily analytics dashboard">
+    <h2 class="card-title">
+      {% if is_today %}Today at a glance{% else %}{{ view_date|date:"M j" }} at a glance{% endif %}
+    </h2>
+
+    <div class="progress-wrap">
+      <svg class="progress-ring" viewBox="0 0 140 140" width="140" height="140">
+        <circle class="progress-ring__track" cx="70" cy="70" r="60"></circle>
+        <circle class="progress-ring__bar" id="progressRingBar" cx="70" cy="70" r="60"
+          data-pct="{{ stats.completion_rate }}"></circle>
+      </svg>
+      <div class="progress-center">
+        <span class="progress-pct" id="progressPct">{{ stats.completion_rate }}%</span>
+        <span class="progress-sub">done</span>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="stat-num" id="statTotal">{{ stats.total }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num" id="statCompleted">{{ stats.completed }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num" id="statPending">{{ stats.pending }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat-box stat-box--accent">
+        <span class="stat-num" id="statHighPriority">{{ stats.high_priority_remaining }}</span>
+        <span class="stat-label">High priority left</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tasks column -->
+  <section class="tasks-col">
+
+    {% if is_today %}
+    <form class="card add-task-form" id="addTaskForm">
+      {% csrf_token %}
+      <input type="hidden" name="date" id="addTaskDateInput" value="{{ view_date_str }}">
+      {% if is_today %}
+      <div class="filter-group" id="addForDateToggle" style="margin-bottom:2px;">
+        <button type="button" class="chip is-active" data-date="{{ view_date_str }}">Today</button>
+        <button type="button" class="chip" data-date="{{ tomorrow_date_str }}">Tomorrow</button>
+      </div>
+      {% endif %}
+      <input type="text" id="taskInput" class="task-text-input"
+             placeholder="What needs doing today?" maxlength="140" required
+             autocomplete="off">
+      <div class="add-task-row">
+        <select id="categorySelect" class="select" name="category">
+          {% for val, label in categories %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select id="prioritySelect" class="select" name="priority">
+          {% for val, label in priorities %}
+          <option value="{{ val }}"{% if val == "Medium" %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <input type="time" id="dueTimeInput" class="select" title="Optional due time">
+        <button type="submit" class="btn btn--primary">{% include "icons.html" with icon="plus" size=14 %} Add</button>
+      </div>
+      <input type="text" id="tagsInput" class="task-text-input" placeholder="Tags (comma separated, optional)">
+    </form>
+    {% endif %}
+
+    <!-- Search -->
+    <form class="search-bar" method="get">
+      {% if not is_today %}<input type="hidden" name="date" value="{{ view_date_str }}">{% endif %}
+      {% include "icons.html" with icon="search" size=15 %}
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search today's tasks…">
+      {% if active_tag %}<input type="hidden" name="tag" value="{{ active_tag }}">{% endif %}
+    </form>
+
+    {% if user_tags %}
+    <div class="tag-filter-row">
+      <a href="?{% if not is_today %}date={{ view_date_str }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}"
+         class="tag-chip{% if not active_tag %} is-active{% endif %}">All tags</a>
+      {% for t in user_tags %}
+      <a href="?{% if not is_today %}date={{ view_date_str }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}tag={{ t.name }}"
+         class="tag-chip{% if active_tag == t.name %} is-active{% endif %}">
+        {% include "icons.html" with icon="tag" size=11 %} {{ t.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group" id="statusFilters">
+        <button class="chip is-active" data-filter="all">All</button>
+        <button class="chip" data-filter="active">Active</button>
+        <button class="chip" data-filter="completed">Completed</button>
+      </div>
+      {% if is_today %}
+      <button class="link-btn" id="clearCompletedBtn">Clear completed</button>
+      {% endif %}
+    </div>
+
+    <!-- Task list -->
+    <ul class="task-list" id="taskList" aria-live="polite">
+      {% for task in tasks %}
+      <li class="task-item{% if task.completed %} is-completed{% endif %}"
+          data-id="{{ task.id }}" data-filter="{% if task.completed %}completed{% else %}active{% endif %}">
+        <div style="display:flex; align-items:flex-start; gap:12px; width:100%;">
+          {% if is_today %}
+          <input type="checkbox" class="task-check" {% if task.completed %}checked{% endif %}
+                 aria-label="Mark {{ task.text }} as {% if task.completed %}pending{% else %}complete{% endif %}"
+                 data-id="{{ task.id }}">
+          {% else %}
+          <input type="checkbox" class="task-check" {% if task.completed %}checked{% endif %} disabled>
+          {% endif %}
+          <div class="task-body">
+            <div class="task-text">{{ task.text }}</div>
+            <div class="task-meta">
+              <span class="tag tag--category">{{ task.category }}</span>
+              <span class="tag tag--priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+              {% for t in task.tags.all %}
+              <span class="tag tag--color-{{ t.color }}">{{ t.name }}</span>
+              {% endfor %}
+              {% if task.due_time %}
+                {% if task.is_overdue %}
+                <span class="due-badge due-badge--overdue">{% include "icons.html" with icon="clock" size=10 %} Overdue {{ task.due_time|time:"g:i A" }}</span>
+                {% elif task.is_due_soon %}
+                <span class="due-badge due-badge--soon">{% include "icons.html" with icon="clock" size=10 %} Due soon {{ task.due_time|time:"g:i A" }}</span>
+                {% else %}
+                <span class="due-badge due-badge--time">{% include "icons.html" with icon="clock" size=10 %} {{ task.due_time|time:"g:i A" }}</span>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% if is_today %}
+          <div class="task-actions">
+            <button class="icon-btn edit-btn" title="Edit task"
+                    data-id="{{ task.id }}"
+                    data-text="{{ task.text }}"
+                    data-category="{{ task.category }}"
+                    data-priority="{{ task.priority }}"
+                    data-notes="{{ task.notes }}"
+                    data-due-time="{% if task.due_time %}{{ task.due_time|time:'H:i' }}{% endif %}"
+                    data-tags="{% for t in task.tags.all %}{{ t.name }}{% if not forloop.last %},{% endif %}{% endfor %}">{% include "icons.html" with icon="edit" size=14 %}</button>
+            <button class="icon-btn icon-btn--danger delete-btn"
+                    title="Delete task" data-id="{{ task.id }}">{% include "icons.html" with icon="trash" size=14 %}</button>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if task.subtasks.all %}
+        <ul class="subtask-list">
+          {% for sub in task.subtasks.all %}
+          <li class="subtask-item{% if sub.completed %} is-completed{% endif %}" data-id="{{ sub.id }}">
+            <input type="checkbox" class="subtask-check" {% if sub.completed %}checked{% endif %} {% if not is_today %}disabled{% endif %} data-id="{{ sub.id }}">
+            <span class="subtask-text">{{ sub.text }}</span>
+            {% if is_today %}
+            <button class="subtask-delete" data-id="{{ sub.id }}" title="Delete subtask">{% include "icons.html" with icon="x" size=13 %}</button>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if is_today %}
+        <button class="subtask-toggle-btn" data-parent-id="{{ task.id }}">
+          {% include "icons.html" with icon="corner-down-right" size=12 %} Add subtask
+        </button>
+        <div class="add-subtask-row hidden" data-parent-id="{{ task.id }}">
+          <input type="text" placeholder="Subtask…" maxlength="140">
+          <button type="button" class="add-subtask-submit" data-parent-id="{{ task.id }}">{% include "icons.html" with icon="plus" size=13 %}</button>
+        </div>
+        {% endif %}
+      </li>
+      {% empty %}
+      <p class="empty-state" id="emptyState">
+        {% if is_today %}Nothing here yet — add your first task above.
+        {% else %}No tasks were logged for this day.{% endif %}
+      </p>
+      {% endfor %}
+    </ul>
+
+    {% if tasks %}
+    <p class="empty-state hidden" id="emptyState">No tasks match this filter.</p>
+    {% endif %}
+
+  </section>
+
+  {% if is_today and habit_sections %}
+  <section class="card today-habits-card" style="grid-column: 1 / -1;" aria-label="Today's habits">
+    <h2 class="card-title">
+      {% include "icons.html" with icon="repeat" size=16 %} Today's Habits
+      <a href="{% url 'habit_list' %}" class="manage-link">Manage habits &rarr;</a>
+    </h2>
+    {% for section_key, section in habit_sections.items %}
+      {% if section.habits %}
+      <div class="today-habits-section-label">{{ section.label }}</div>
+      {% for item in section.habits %}
+        {% include "habits/_habit_card_compact.html" with item=item %}
+      {% endfor %}
+      {% endif %}
+    {% endfor %}
+    {% if not habit_sections.have_to_do.habits and not habit_sections.need_to_do.habits and not habit_sections.would_do.habits %}
+    <p class="empty-state">No habits yet — <a href="{% url 'habit_create' %}">create one</a> and it'll show up here every day.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</main>
+
+<footer class="app-footer">
+  <span>Signed in as {{ request.user.username }} ·
+    <a href="{% url 'habit_list' %}" class="footer-link">Habits</a> ·
+    <a href="{% url 'weekly_report' %}" class="footer-link">Weekly report</a> ·
+    <a href="{% url 'monthly_report' %}" class="footer-link">Monthly report</a>
+  </span>
+</footer>
+
+<!-- Edit modal -->
+<dialog id="editDialog" class="edit-dialog">
+  <form id="editForm">
+    <h3>Edit task</h3>
+    <input type="text" id="editTextInput" class="task-text-input" maxlength="140" required>
+    <div class="add-task-row">
+      <select id="editCategorySelect" class="select">
+        {% for val, label in categories %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select id="editPrioritySelect" class="select">
+        {% for val, label in priorities %}
+        <option value="{{ val }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <input type="time" id="editDueTimeInput" class="select">
+    </div>
+    <input type="text" id="editTagsInput" class="task-text-input" placeholder="Tags (comma separated)">
+    <textarea id="editNotesInput" class="notes-textarea" placeholder="Notes (optional)"></textarea>
+    <div class="edit-actions">
+      <button type="button" class="btn btn--ghost" id="cancelEditBtn">Cancel</button>
+      <button type="submit" class="btn btn--primary">Save changes</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  const CSRF_TOKEN = "{{ csrf_token }}";
+  const VIEW_DATE = "{{ view_date_str }}";
+  const IS_TODAY = {{ is_today|yesno:"true,false" }};
+  const URLS = {
+    create:         "{% url 'task_create' %}",
+    toggle:         "/api/tasks/__ID__/toggle/",
+    edit:           "/api/tasks/__ID__/edit/",
+    del:            "/api/tasks/__ID__/delete/",
+    clearCompleted: "{% url 'tasks_clear_completed' %}",
+    importJson:     "{% url 'import_json' %}",
+    subtaskCreate:  "/api/tasks/__ID__/subtasks/create/",
+    subtaskToggle:  "/api/subtasks/__ID__/toggle/",
+    subtaskDelete:  "/api/subtasks/__ID__/delete/",
+  };
+  const HABIT_URLS = {
+    toggleYesNo:      "/habits/api/__ID__/toggle-yesno/",
+    logNumeric:       "/habits/api/__ID__/log-numeric/",
+    checklistToggle:  "/habits/api/__ID__/checklist-toggle/",
+    graceDay:         "/habits/api/__ID__/grace-day/",
+  };
+
+  // "Add for: Today / Tomorrow" toggle — lets you queue up tomorrow's
+  // tasks while still looking at today's list, without navigating away.
+  document.getElementById("addForDateToggle")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    document.querySelectorAll("#addForDateToggle .chip").forEach((c) => c.classList.toggle("is-active", c === btn));
+    document.getElementById("addTaskDateInput").value = btn.dataset.date;
+  });
+</script>
+<script src="{% static 'js/app.js' %}"></script>
+<script src="{% static 'js/habits.js' %}"></script>
+{% endblock %}

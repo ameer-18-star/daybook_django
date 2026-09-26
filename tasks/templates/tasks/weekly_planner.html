@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Weekly Planner{% endblock %}
+
+{% block extra_css %}
+<style>
+.planner-page-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.planner-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+.planner-header h1 { font-family: var(--font-display); font-size: 22px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.planner-subtitle { color: var(--ink-faint); font-size: 13px; margin: 2px 0 0; }
+
+.habits-reference {
+  grid-column: 1 / -1;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--paper-raised);
+  border: var(--surface-border-w) solid var(--surface-border-color);
+  border-radius: var(--surface-radius);
+  box-shadow: var(--surface-shadow);
+  padding: var(--space-lg);
+}
+.habits-reference h2 {
+  font-size: 13.5px; font-weight: 700; margin: 0 0 10px;
+  display: flex; align-items: center; gap: 8px; color: var(--ink-soft);
+}
+.habits-reference-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-sm);
+  width: 100%;
+}
+.habits-reference-group-label {
+  font-size: 11px; font-weight: 700; color: var(--ink-faint);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+}
+.habit-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.habit-chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px; background: var(--line-soft); color: var(--ink-soft);
+}
+.habit-chip.is-paused { opacity: 0.55; text-decoration: line-through; }
+.habits-reference-empty { font-size: 12.5px; color: var(--ink-faint); font-style: italic; }
+
+/* ---- Day grid: full-width, responsive column count, matches dashboard tokens ---- */
+.planner-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+  width: 100%;
+  align-items: start;
+  box-sizing: border-box;
+}
+
+.planner-day {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--paper-raised);
+  border: var(--surface-border-w) solid var(--surface-border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.planner-day.is-first { border-color: var(--accent); border-width: 2px; }
+.planner-day-head { display: flex; align-items: baseline; justify-content: space-between; width: 100%; }
+.planner-day-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+.planner-day-date { font-size: 11px; color: var(--ink-faint); font-family: var(--font-mono); }
+.planner-day-count { font-size: 11px; color: var(--ink-faint); }
+
+.planner-task-list { display: flex; flex-direction: column; gap: 6px; min-height: 4px; width: 100%; }
+.planner-task-item {
+  display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; width: 100%; box-sizing: border-box;
+  padding: 6px 8px; background: var(--paper); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+}
+.planner-task-item.is-completed .planner-task-text { text-decoration: line-through; color: var(--ink-faint); }
+.planner-task-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.planner-task-check {
+  appearance: none; width: 16px; height: 16px; min-width: 16px; border: 2px solid var(--line); border-radius: 5px;
+  cursor: pointer; margin-top: 1px; display: grid; place-content: center; flex-shrink: 0;
+}
+.planner-task-check:checked { background: var(--accent); border-color: var(--accent); }
+.planner-task-check:checked::after { content: "✓"; color: #fff; font-size: 10px; font-weight: 700; }
+.planner-task-delete { background: none; border: none; color: var(--ink-faint); cursor: pointer; padding: 1px; flex-shrink: 0; }
+.planner-task-delete:hover { color: var(--danger); }
+.planner-day-empty { font-size: 11.5px; color: var(--ink-faint); font-style: italic; }
+
+.planner-add-form {
+  display: flex; flex-direction: column; gap: 6px; padding-top: 8px;
+  border-top: 1px dashed var(--line-soft); width: 100%; box-sizing: border-box;
+}
+.planner-add-form input,
+.planner-add-form select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: 12.5px; padding: 0 8px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink);
+}
+.planner-add-form button {
+  width: 100%; box-sizing: border-box; font-size: 12px; padding: 6px; border-radius: var(--radius-sm); border: none; cursor: pointer;
+  background: var(--accent-soft); color: var(--accent-strong); font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.planner-add-form button:hover { background: var(--accent); color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="planner-page-grid">
+
+  <div class="planner-header">
+    <div>
+      <h1>{% include "icons.html" with icon="calendar" size=20 %} Weekly Planner</h1>
+      <p class="planner-subtitle">{{ week_start|date:"M j" }} – {{ week_end|date:"M j, Y" }} &middot; queue up next week's tasks now</p>
+    </div>
+    <a href="{% url 'index' %}" class="btn btn--ghost">{% include "icons.html" with icon="check-square" size=14 %} Today's tasks</a>
+  </div>
+
+  <div class="habits-reference">
+    <h2>{% include "icons.html" with icon="repeat" size=15 %} Your active habits — happen automatically every day, shown here for reference</h2>
+    <div class="habits-reference-groups">
+      {% for section_key, section in habit_sections.items %}
+      <div>
+        <div class="habits-reference-group-label">{{ section.label }}</div>
+        <div class="habit-chip-row">
+          {% for h in section.habits %}
+          <span class="habit-chip{% if h.paused %} is-paused{% endif %}">{{ h.text }}</span>
+          {% empty %}
+          <span class="habits-reference-empty">None yet</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="planner-grid">
+    {% for day in days %}
+    <div class="planner-day{% if forloop.first %} is-first{% endif %}">
+      <div class="planner-day-head">
+        <div>
+          <div class="planner-day-name">{{ day.date|date:"D" }}</div>
+          <div class="planner-day-date">{{ day.date|date:"M j" }}</div>
+        </div>
+        <div class="planner-day-count">{{ day.stats.completed }}/{{ day.stats.total }}</div>
+      </div>
+
+      <div class="planner-task-list">
+        {% for task in day.tasks %}
+        <div class="planner-task-item{% if task.completed %} is-completed{% endif %}">
+          <form method="post" action="{% url 'weekly_planner_toggle_task' task.id %}" style="display:contents;">
+            {% csrf_token %}
+            <input type="checkbox" class="planner-task-check" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
+          </form>
+          <span class="planner-task-text">{{ task.text }}</span>
+          <form method="post" action="{% url 'weekly_planner_delete_task' task.id %}">
+            {% csrf_token %}
+            <button type="submit" class="planner-task-delete" title="Delete">{% include "icons.html" with icon="x" size=12 %}</button>
+          </form>
+        </div>
+        {% empty %}
+        <p class="planner-day-empty">Nothing queued yet.</p>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="{% url 'weekly_planner_add_task' %}" class="planner-add-form">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ day.date|date:'Y-m-d' }}">
+        <input type="text" name="text" placeholder="Add a task…" maxlength="140" required>
+        <select name="category">
+          {% for val, label in categories %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="priority">
+          {% for val, label in priorities %}
+          <option value="{{ val }}"{% if val == "Medium" %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">{% include "icons.html" with icon="plus" size=12 %} Add</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-page-wrap { max-width: 980px; margin: clamp(24px, 6vh, 64px) auto; }
+.auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 540px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--line);
+}
+@media (max-width: 760px) {
+  .auth-split { grid-template-columns: 1fr; min-height: auto; }
+  .auth-brand-panel { min-height: 200px; }
+}
+
+.auth-brand-panel {
+  /* Deliberately theme-independent (fixed dark bg, fixed light text)
+     rather than var(--ink)/var(--paper), which swap meaning in dark
+     mode and would flip this panel to a light background — breaking
+     the hardcoded light-cream text below. */
+  background: #201F17;
+  color: #FAF7EE;
+  padding: clamp(28px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  border-left: 4px solid var(--margin-rule);
+}
+.auth-brand-top .brand-mark { color: #7BC9AE; font-size: 30px; }
+.auth-brand-top h1 { font-family: var(--font-display); font-size: 26px; margin: 8px 0 4px; color: #FAF7EE; }
+.auth-brand-top .sub { color: rgba(250,247,238,0.65); font-size: 13.5px; font-style: italic; font-family: var(--font-display); }
+.auth-feature-list { list-style: none; margin: 28px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.auth-feature-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: rgba(250,247,238,0.85); }
+.auth-feature-list .icon { color: #7BC9AE; flex-shrink: 0; margin-top: 1px; }
+.auth-brand-quote { font-family: var(--font-display); font-style: italic; font-size: 13px; color: rgba(250,247,238,0.5); margin: 0; }
+
+.auth-form-panel {
+  background: var(--paper-raised);
+  padding: clamp(28px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.auth-form-panel h2 { font-family: var(--font-display); font-size: 22px; margin: 0 0 4px; }
+.auth-form-panel .sub { color: var(--ink-faint); font-size: 13px; margin-bottom: 24px; }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 600; }
+.auth-field input {
+  width: 100%; font-size: 14px; height: var(--control-h); padding: 0 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--paper); font-family: inherit;
+}
+.auth-field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.auth-errors { background: var(--priority-high-bg); color: var(--priority-high); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-bottom: 14px; }
+.auth-footer { text-align: center; margin-top: 18px; font-size: 13px; color: var(--ink-faint); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrap">
+  <div class="auth-split">
+    <div class="auth-brand-panel">
+      <div class="auth-brand-top">
+        <span class="brand-mark">◐</span>
+        <h1>Daybook</h1>
+        <p class="sub">one page, one day, one list</p>
+        <ul class="auth-feature-list">
+          <li>{% include "icons.html" with icon="check-square" size=15 %} Daily tasks, recurring routines, and subtasks in one list</li>
+          <li>{% include "icons.html" with icon="repeat" size=15 %} Habit tracking with streaks, grace days, and a swimlane timeline</li>
+          <li>{% include "icons.html" with icon="chart-bar" size=15 %} Stats, heatmaps, and a full year at a glance</li>
+          <li>{% include "icons.html" with icon="book-open" size=15 %} A private daily journal, scoped to your account only</li>
+        </ul>
+      </div>
+      <p class="auth-brand-quote">&ldquo;A ledger for the parts of the day that matter.&rdquo;</p>
+    </div>
+
+    <div class="auth-form-panel">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to your account</p>
+
+      {% if form.errors %}
+      <div class="auth-errors">Your username and password didn't match. Please try again.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="auth-field">
+          <label for="id_username">Username</label>
+          {{ form.username }}
+        </div>
+        <div class="auth-field">
+          <label for="id_password">Password</label>
+          {{ form.password }}
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn--primary" style="width:100%;">Sign in</button>
+      </form>
+
+      <p class="auth-footer">No account yet? <a href="{% url 'register' %}" class="footer-link">Create one</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
