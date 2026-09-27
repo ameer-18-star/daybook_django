@@ -125,7 +125,7 @@ button, input, select, textarea {
 
 .app {
   max-width: 1760px;
-  margin: 0 auto;
+  margin: 0 40px;
   padding: var(--space-xl) var(--space-lg) clamp(48px, 8vw, 72px);
   position: relative;
 }
