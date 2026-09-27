@@ -5,53 +5,63 @@
 
 {% block extra_css %}
 <style>
-.habits-wrap { max-width: var(--page-max-width); margin: 0 auto; }
+.habits-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .habits-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  width: 100%;
 }
 .habits-header h1 { font-family: var(--font-display); font-size: 24px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .habits-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-.habit-section { margin-bottom: 22px; }
+.habit-section { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
 .habit-section-title {
   font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint);
-  font-weight: 700; margin: 0 0 10px; display: flex; align-items: center; gap: 8px;
+  font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px;
 }
 .habit-section-title .count { color: var(--ink-faint); font-weight: 500; }
 
 .habit-card {
   background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 20px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+  width: 100%; box-sizing: border-box;
 }
 .habit-card.is-paused { opacity: 0.6; }
 .habit-card-top { display: flex; align-items: flex-start; gap: 12px; }
 .habit-card-main { flex: 1; min-width: 0; }
 .habit-card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.habit-card-title { font-size: 14.5px; font-weight: 600; }
+.habit-card-title { font-size: 15px; font-weight: 600; }
 .habit-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
 .habit-meta-badge {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600;
-  padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--ink-soft);
+  display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; background: var(--line-soft); color: var(--ink-soft);
 }
 .habit-streak-badge { background: var(--priority-med-bg); color: var(--priority-med); }
 .habit-streak-badge.is-zero { background: var(--line-soft); color: var(--ink-faint); }
 .habit-paused-badge { background: var(--priority-high-bg); color: var(--priority-high); }
 
-.habit-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.habit-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
 /* Yes/No */
 .habit-yesno-toggle {
-  width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line);
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--line);
   background: var(--paper); cursor: pointer; display: flex; align-items: center; justify-content: center;
   color: transparent; flex-shrink: 0;
 }
 .habit-yesno-toggle.is-completed { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* Numeric */
-.habit-numeric-row { display: flex; align-items: center; gap: 8px; }
+.habit-numeric-row { display: flex; align-items: center; gap: 10px; }
 .habit-numeric-input {
-  width: 90px; font-size: 13px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line);
+  width: 110px; font-size: 13px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--paper); color: var(--ink);
 }
 .habit-numeric-target { font-size: 12px; color: var(--ink-faint); }
@@ -73,32 +83,45 @@
 .grace-day-btn:hover { background: var(--priority-med-bg); }
 
 /* Compact mode */
-.app.is-compact .habit-card { padding: 8px 12px; gap: 6px; margin-bottom: 6px; }
-.app.is-compact .habit-card-title { font-size: 13px; }
+.app.is-compact .habit-card { padding: 10px 14px; gap: 6px; margin-bottom: 6px; }
+.app.is-compact .habit-card-title { font-size: 13.5px; }
 .app.is-compact .habit-meta-row { margin-top: 2px; }
-.app.is-compact .habit-yesno-toggle { width: 24px; height: 24px; }
-.app.is-compact .habit-section { margin-bottom: 14px; }
+.app.is-compact .habit-yesno-toggle { width: 26px; height: 26px; }
+.app.is-compact .habit-section { margin-bottom: 16px; }
 
 /* Archived */
 .archived-toggle {
   background: none; border: none; color: var(--ink-faint); font-size: 12.5px; cursor: pointer;
-  display: flex; align-items: center; gap: 6px; margin: 20px 0 10px;
+  display: flex; align-items: center; gap: 6px; margin: 20px 0 10px; align-self: flex-start;
 }
+.archived-list { width: 100%; }
 .archived-list.hidden { display: none; }
 .habit-form-note { font-size: 12px; color: var(--ink-faint); margin: -4px 0 8px; }
 
-/* Drag handle + sortable states */
+/* Full Width Grid & Dynamic Cards */
 .habit-cards {
   min-height: 8px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(100%, 1fr));
   gap: var(--space-sm);
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
-/* Grid gap already spaces cards out — the shared .habit-card class's own
-   margin-bottom (needed for its other, non-grid use on the Tasks page)
-   would otherwise double up here. */
+
 .habit-cards .habit-card { margin-bottom: 0; }
+.habit-cards p.empty-state {
+  width: 100%;
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--paper-raised);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--ink-faint);
+  box-sizing: border-box;
+  margin: 0;
+}
+
 .habit-drag-handle {
   color: var(--ink-faint); cursor: grab; display: flex; align-items: center; flex-shrink: 0;
   touch-action: none;
@@ -233,7 +256,7 @@
 
         <div class="habit-actions">
           <a href="{% url 'habit_stats_detail' item.habit.id %}" class="icon-btn" title="View stats">{% include "icons.html" with icon="trending-up" size=14 %}</a>
-<a href="{% url 'habit_edit' item.habit.id %}" class="icon-btn" title="Edit habit">{% include "icons.html" with icon="edit" size=14 %}</a>
+          <a href="{% url 'habit_edit' item.habit.id %}" class="icon-btn" title="Edit habit">{% include "icons.html" with icon="edit" size=14 %}</a>
           <form method="post" action="{% url 'habit_pause_toggle' item.habit.id %}">
             {% csrf_token %}
             <button type="submit" class="icon-btn" title="{% if item.habit.paused %}Resume{% else %}Pause{% endif %}">
